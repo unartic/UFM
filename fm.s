@@ -6675,32 +6675,8 @@ jsrfar: .include "jsrfar.inc"
     .include "functions.s"
     .include "functions_shared.s"
     .include "jsrfar_kernal.s"
-    .include "debug.s"
-
-;Load the program and launch it via RUN, no attempt to return to UFM
-LoadAndLaunch:
-    CopyAddrUntilZero CMD_BUFFER,CMD,cnt
-
-
-    jsr ResetVera
-    
-    
-
-   ;switch to petscii
-    lda #2
-    jsr screen_set_charset 
-
-    lda #$8F
-    jsr CHROUT
-    
-    lda #$8E
-    jsr CHROUT 
-    
-    jsr LoadPRGFileIntoMemory
- 
-    jsr DoBasicRunCommand
-rts    
-
+   ; .include "debug.s"
+  
 ;RAM-version
 launch_prg:
     .ifdef uselauncher
