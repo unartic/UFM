@@ -1351,9 +1351,8 @@ Goto_SelectSupportedScreenmode: jmp SelectSupportedScreenmode
 
 ;Main/Begin
 start:
-    jsr ResetVera
-    jsr SetCharsetIso
 
+    jsr SetCharsetIso
 
 
     ;check screen mode
@@ -1363,10 +1362,14 @@ start:
     sty SCREEN_ROWS
     stx SCREEN_COLS
 
+
+
     cpx #39 ;if less then 40 columns, ask to select another screen mode
     bmi Goto_SelectSupportedScreenmode
     
-
+    jsr ResetVera
+    ;jsr SetCharsetIso
+    
     lda $03fe   ;address of current device number
     pha
         jsr CheckConnectedDevices   ;list available devices
@@ -2925,7 +2928,7 @@ SelectSupportedScreenmode:
         cmp #0
         beq @lp
         
-        jsr print_hex_debug
+      ;  jsr print_hex_debug
         cmp #$41    ;a
         beq @ToMode0
         cmp #$61    ;a
@@ -6666,6 +6669,28 @@ CopyLaunchToMem:
 rts
 
 
+LoadAndLaunch:
+    CopyAddrUntilZero CMD_BUFFER,CMD,cnt
+
+
+    jsr ResetVera
+    
+    
+
+   ;switch to petscii
+    lda #2
+    jsr screen_set_charset 
+
+    lda #$8F
+    jsr CHROUT
+    
+    lda #$8E
+    jsr CHROUT 
+    
+    jsr LoadPRGFileIntoMemory
+ 
+    jsr DoBasicRunCommand
+rts    
 
 
 

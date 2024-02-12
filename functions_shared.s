@@ -76,7 +76,7 @@ rts
 
 DoBasicRunCommand:
 jmp DoBasicRunCommand_start
-    BasicRunCommand: .asciiz "bank1,4:run"
+    BasicRunCommand: .asciiz "bank1,0:run"
 DoBasicRunCommand_start:
     ;clear screen
     lda #$93
