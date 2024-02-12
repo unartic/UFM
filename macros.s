@@ -103,7 +103,8 @@
             lda addr,Y
             cmp #0
             beq :+
-            sta DEBUG
+            jsr CHROUT
+           ; sta DEBUG
             iny
             jmp :-
         :

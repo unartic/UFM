@@ -1,287 +1,372 @@
-.segment "RAMBANK63"    ;4096 bytes
-    ;rambank 63 is for temporary variable storage. Should be set accordingly
-    CUR_PATH:           .res 255
-    SourceFile:         .res 255
-    DestFile:           .res 255
-    InputBuffer:        .res 255   
-    TMPSTRING2:         .res 255   ;don;t like this one.Only used for file info function! (conflicts with TMPSTRING)
+.org $080D
 
-    DIR_CURRENT:        .res 500    ;current path
-    DIR_LEFT:           .res 500
-    DIR_RIGHT:          .res 500    
-    MSG_MODAL:          .res 255
-    
-    
-.segment "RAMBANK62"
-    MODAL_SCREEN_BACKUP: .res 2000  ;write to a memorybank, saves a lot of space 
-.segment "GOLDENRAM"
-;Window Vars
-    ;order and location of the first two symbols is important for launch.prg to work!!
-    CMD_BUFFER:    .res 255    ;max length of CD: and the full path
-    FileInfo_Name: .res 255     
-    
-    RAMBANK_BACKUP: .res 1
-    iCurrentWindow: .res 1  ;   0=left window, 1=rightwindow
-    ListSize:       .res 1  ;   lines on screen, depends on screen mode
-    ListCounter:    .res 1  ;   Temporary storage of current list item 
-
-    OFFSET_CURRENT: .res 1  ;   Offset of files list of current window    
-    OFFSET_LEFT:    .res 1  ;   Offset of files list of left window
-    OFFSET_RIGHT:   .res 1  ;   Offset of files list of right window
-
-    ROW_CURRENT:    .res 1  ;   index-offset of highlighted file current window
-    ROW_LEFT:       .res 1  ;   index-offset of highlighted file left window
-    ROW_RIGHT:      .res 1  ;   index-offset of highlighted file right window
-
-    DEVICE_CURRENT: .res 1  ;   device number of current window
-    DEVICE_LEFT:    .res 1  ;   device number of left window
-    DEVICE_RIGHT:   .res 1  ;   device number of right window
-    DEVICE_OTHER:   .res 1  ;   device number of the other window
-    DEVICE_START:   .res 1  ;   device number from where UFM has been started (needed to return after launch in RAM version)
-    
-    PARTITION_CURRENT:  .res 1  ;   Partition number of current window (only if not hostfs)
-    PARTITION_LEFT:     .res 1  ;   Partition number of left window (only if not hostfs)
-    PARTITION_RIGHT:    .res 1  ;   Partition number of right window (only if not hostfs)
-    PARTITION_OTHER:    .res 1  ;   Partition number of other window (only if not hostfs)
-    PARTITION_START:    .res 1  ;   Partition number from where UFM has been started (needed to return after launch in RAM version)
-
-    PAGE_CURRENT:       .res 1  ;   Displayed page of current window
-    PAGE_LEFT:          .res 1  ;   Displayed page of left window
-    PAGE_RIGHT:         .res 1  ;   Displayed page of right window
-
-    MODE_CURRENT:   .res 1  ;   Display mode of current window (0=files view, 1=select device/partition)
-    MODE_LEFT:      .res 1  ;   Display mode of left window (0=files view, 1=select device/partition)
-    MODE_RIGHT:     .res 1  ;   Display mode of left right (0=files view, 1=select device/partition)
-    MODE_OTHER:     .res 1  ;   Display mode of other window (0=files view, 1=select device/partition)
-
-    CNT_PARTITIONS: .res 1  ;   Number of partitions
-
-    FILECOUNT_CURRENT:  .res 1  ;   File count of current window
-    FILECOUNT_LEFT:     .res 1  ;   File count of left window
-    FILECOUNT_RIGHT:    .res 1  ;   File count of right window
-    
-    COL_OFFSET:         .res 1  ;   Screen column offset to print in left or right window
-
-    MODAL_COL:          .res 1  ;   Column offset of the modal window
-    MODAL_ROW:          .res 1  ;   Row offset of the modal window
-
-    MODAL_COL_COUNT:    .res 1  ;   Temp storage of column while drawing modal
-    MODAL_ROW_COUNT:    .res 1  ;   Temp storage of row while drawing modal
-
-    MODAL_WIDTH:        .res 1  ;   Width in chars of modal to be drawn
-    MODAL_HEIGHT:       .res 1  ;   Height in chars of modal to be drawn
-
-;Window settings
-    SET_SHOWDATE:       .res 1  ;   Setting for displaying file dates in windows
-    SET_SHOWTIME:       .res 1  ;   Setting for displaying file times in windows
-    SET_SHOWSIZE:       .res 1  ;   Setting for displaying file sizes in windows
-    SET_DATE_LEN:       .res 1  ;   Display lenth of file dates (64 cols needs dates printed as DD-MM-YY)    
-    
-    WINDOW_WIDTH:       .res 1  ;   Width of the window, based on the screen mode
-
-;Joystick buttons
-    JOY_PRESSED_A:          .res 1      ;is 1 when gamepad button A is pressed
-    JOY_BTN_A_COUNTDOWN:    .res 1      ;delay counter for next press
-
-    JOY_BTN_DOWN_COUNTDOWN: .res 1 
-    JOY_PRESSED_DOWN:       .res 1
-
-    JOY_BTN_UP_COUNTDOWN:   .res 1 
-    JOY_PRESSED_UP:         .res 1
-
-    JOY_BTN_RIGHT_COUNTDOWN: .res 1
-    JOY_PRESSED_RIGHT:      .res 1
-
-    JOY_BTN_LEFT_COUNTDOWN: .res 1 
-    JOY_PRESSED_LEFT:       .res 1 
-
-    JOY_BTN_B_COUNTDOWN:    .res 1 
-    JOY_PRESSED_B:          .res 1 
-
-    JOY_BTN_L_COUNTDOWN:    .res 1
-    JOY_PRESSED_L:          .res 1 
-
-    JOY_BTN_R_COUNTDOWN:    .res 1
-    JOY_PRESSED_R:          .res 1 
-
-    JOY_BTN_SELECT_COUNTDOWN:.res 1 
-    JOY_PRESSED_SELECT:     .res 1 
- 
-    JOYSTICK_CUR_LINE:      .res 1 ;Highligted line of joystick select modal   
-
-    ;jsr PLOT, but then to address VERA directly (setting address of vera)
-    VERA_PLOT_X:    .res 1 
-    VERA_PLOT_Y:    .res 1 
-    
-    ;File info vars are used to fill file information into commands and messages
-    FileInfo_Date: .res 10
-    FileInfo_Time: .res 5
-    FileInfo_Type: .res 4  
-    FileInfo_Size: .res 9 
-    
-    TMP_FILESIZE:               .res 2  ;Temporary storage of 2 byte file size when reading files list
-    TMP_FILESIZE_DESIGNATOR:    .res 2  ;Temporary storage of 2 byte file size designator (kb/mb) when reading files list 
-    
-;Global multi purpose vars
-    CNT:            .res 1 
-    TMP:            .res 1
-    TMP2:           .res 1
-    TMP3:           .res 1 
-    LFN_Pointer:    .res 2  ; 2 bytes to temporatily store long filename pointer
-
-    CMD_BUFFER_LENGTH:  .res 1  ;   Length of a command to be send to channel 15, or the length of a filename for open/load
-    CMD_BUFFER_RESULT:  .res 50 ;   Buffer to store result of performing dos command
-
-    SCREEN_ROWS:        .res 1 ;    Rows of the current screen
-    SCREEN_COLS:        .res 1 ;    Columns of the current screen
-
-    DOS_DIR_TYPE:       .res 1  ;    0->read directory's, 1=read files
-    DOS_CMD_DEVICE:     .res 1  ;    0=Use current device number for dos-command, 1=Use other windows device number for dos-command
-    
-    TSRTYPE:            .res 1 ;    File type of program tobe launched (B=basic,A=assembly)
-    LAST_RDTIM:         .res 1 ;    Temporarystorage of result of low byte of RDTIM
-    DEVICES_CONNECTED:  .res 20 ;   String of 1 byte devicenumbers of devices that where detected
-
-    TMPSTRING:          .res 255
-    
-    RESULT_KEY:         .res 1 ;    Pressed key of a confirmation modal dialog
-
-    PAGE_FILE_COUNT:    .res 1 ;    Maximum files per page
-    PAGE_CURRENT_USE:   .res 1 ;    Number of current page
-    
-    LAST_START_POINTER: .res 2  ;   Temporary pointer for reading files list 
-
-    CUR_PATH_LAST_CHAR: .res 1  ;   Last char of current path
- 
- ;File Copy params
-    SourceFileCnt:      .res 1 ;    Length of source file name
-    DEVICE_DEST:        .res 1 ;    Device number to be used to write the file
-    DestFileCnt:        .res 1 ;    Length of destination file name
-    PB_BLOCKS:          .res 2  ;   File size in blocks of 255 bytes
-    PB_COUNTER:         .res 2  ;   Progress bar counter
-    PB_COUNT_CHECK:     .res 1  ;   Storage of when to check if prograss bar needs another block
-    PB_CHARS:           .res 1  ;   Buffer of blocks to be displayed in progressbar
-    IsEof:              .res 1  ;   Tmp storage of end of file
-    CopyBuffercnt:      .res 1  ;   Count of bytes in current copy buffer
-    CHECKFILE_RESULT:   .res 1  ;   Result of check if file exists in other window
-    
-;vars from functions.s
-    Adder24bitValue: .res 3     ;   Value of 24bit address
-    Adder24bitToAdd: .res 2     ;   Value to add to the 24 bit adder value
-    
-    InputLength:  .res 1        ;   Length of the inputbuffer after user input via keyboard 
-    
-    value_32bit: .res 4         ;   temp storage of math functions
-    mod10_32bit: .res 4         ;   temp storage of math functions
-    result_32bit: .res 12       ;   temp storage of math functions
-    resultindex_32bit: .res 1   ;   temp storage of math functions    
-
-    LaunchAddressAscii: .res 4  ;   result of 2 byte hex to ascii conversion
-    
-.segment "DATA"
-    ;DOS-commands
-    DOS_FILEEXISTS: .asciiz "$:[f]"     
-    DOS_CURDIR: .asciiz "cd:[c]"
-    DOS_CURDIROTHER: .asciiz "cd:[p]"  
-
-    DOS_DIR: .byte "$=l:*=d"   
-    DOS_DIR_END: .byte $0
-
-    DOS_FILES: .byte "$=l:*=p" 
-    DOS_FILES_END: .byte $0
- 
-    TSRPRG: .asciiz "[s]/[f]"   ;path and filename of file to be launched 
-
-    JOYSTICK_MSG: .asciiz "#  info#  edit#  copy#  rename#  move#  mkdir#  delete###  point and press a, b to exit  "
-    
-    ;basic sys command to the launcher in RAM or ROM
-    .ifdef uselauncher
-        LaunchSYS: .asciiz "sys $9718";$8001"
-    .endif
-    .ifndef uselauncher
-        LaunchSYS: .asciiz "sys $";$8001
-
-    .endif
-    
-    SCREEN_MODE_MSG:  .byte $0d,"screenmode is not supported. please choose one of these:",$0d,$0d,$0d
-                        .byte " a. mode 0: 80x60",$0d
-                        .byte " b. mode 1: 80x30",$0d
-                        .byte " c. mode 2: 40x60",$0d
-                        .byte " d. mode 3: 40x30",$0d
-                        .byte " e. mode 4: 40x15",$0d
-                        .byte " f. mode 8: 64x50",$0d
-                        .byte " g. mode 9: 64x25",$0d
-                        .byte " q. quit",$0d,$0d
-                        .byte "(press a,b,c,d,e,f,g or q on the keyboard)"
-                        
-                        .byte $0
-                    
-
-   
-.segment "CODE"
+.segment "ONCE"
 
 .include "constants.s"
-.include "io.inc"
-
-jsrfar3    = $02c4
-imparm     = $82
-jmpfr      = $02df
-
-
-
-;set golden ram to 0
-    lda #00
-    sta ZP_PTR
-    lda #$04
-    sta ZP_PTR+1
-
-
-    ldy #0
-    NextYY:
-    ldx #0
-    :
-        lda #0
-        sta (ZP_PTR)
-        jsr IncBankPointer
-        inx
-        cpx #0
-        bne :-
-        iny
-        cpy #4
-        bne NextYY
-
-;Initialise variables
-    inc COL_OFFSET  ;initialize to #1
-
-
-
 
 ;Rambanks used:
-    RB_FILES_LIST_LEFT      = 01    
-    RB_FILES_LIST_RIGHT     = 02
-    RB_LONGFILENAMES_LEFT   = 03
-    RB_LONGFILENAMES_RIGHT  = 04
-    RB_PARTITIONS           = 05
-    ;rambanks 63 and 62 are used for variable storage
+RB_FILES_LIST_LEFT      = 01    
+RB_FILES_LIST_RIGHT     = 02
+RB_LONGFILENAMES_LEFT   = 03
+RB_LONGFILENAMES_RIGHT  = 04
+RB_PARTITIONS           = 05
 
 
-SET_RECORD_LENGTH       = 40    ;Length of 1 file record
-SET_MAX_FILES_COUNT     = 200   ;Max files per page
-
-JOY_NUMBER              = 1     ;compile time setting: 0=keyboard, 1=joy1
-JOY_PRESENT             = 1     ;1=check joystick input, 0 do not check
-JOY_PRESS_DELAY         = 10    ;countdown delay befor next button press
-DEFAULT_MODAL_WIDTH     = 40    ;default width of modal windows
-
-x16EditFileBuffer       = $9dff ;Memory location to store the filename for x16edit to be loaded
-LAUNCHFILE = $04FF              ;Memory location to store the file to be launched by the launcher
+;TODO:
+; - typen  gaat direct naar folder of bestand met die naam
+; - sterretje = filteren
+; - launch.s zo klein mogelijk maken
+; - launch.s zo hoog mogelijk in mem plaatsen
+; - check if ufm.prg is in current folder, ifso store cfg-file in root to re-launch fron launch.prg
+; - Copy memory banks if dirs are the same on start needs to be tested if they are different
+; - test all actions on and between partitions
 
 
+; Known limitations:
+; - 255x200 = 51000 files max per directory
+; - total path length per window is 255 bytes
+
+; TESTS:
+; MKDIR root:         x      HostFS: 06-12  SD-Card: 11-22      Real Hardware:
+; MKDIR non-root:     x      HostFS: 06-12  SD-Card: 11-22      Real Hardware
+
+; Rename root:        x      HostFS: 06-12  SD-Card: 11-22      Real Hardware:
+; Rename non-root:    x      HostFS: 06-12  SD-Card: 11-22      Real Hardware
+
+; Delete file root:   x      HostFS: 06-12  SD-Card: 11-22      Real Hardware:
+; Delete file non-root: x    HostFS: 06-12  SD-Card: 11-22      Real Hardware
+
+; Delete dir root:      x    HostFS: 06-12  SD-Card: 11-22      Real Hardware:
+; Delete dir non-root:   x   HostFS: 06-12  SD-Card: 11-22      Real Hardware
+
+; Edit File from root:    x  HostFS: 06-12  SD-Card: 11-22      Real Hardware:
+; Edit file from non-root: x HostFS: 06-12  SD-Card: 11-22      Real Hardware
+
+; Copy file root-sub:  x     HostFS: 06-12  SD-Card: 11-22      Real Hardware:
+; Copy file sub-root:  x     HostFS: 06-12  SD-Card: 11-22      Real Hardware
+; Copy file sub-sub:   x     HostFS: 06-12  SD-Card: 11-22      Real Hardware
+
+; Run BAS from root         HostFS: 06-12  SD-Card: 11-22      Real Hardware
+; Run LM from root          HostFS: 06-12  SD-Card: 11-22      Real Hardware
+
+; Run bas from sub          HostFS: 06-12  SD-Card: 11-22      Real Hardware
+; Run LM from sub           HostFS: 06-12  SD-Card: 11-22      Real Hardware
+; Run from other device
+; Run from other partition
+
+; Rename dir           x     HostFS: 06-12  SD-Card: 11-22      Real Hardware
+
+; move file: not supported  
+
+;screenmodes
+;Mode	Description
+;$00	80x60 text
+;$01	80x30 text
+;$02	40x60 text
+;$03	40x30 text
+;$04	40x15 text
+;$05	20x30 text
+;$06	20x15 text
+;$07	22x23 text
+;$08	64x50 text
+;$09	64x25 text
+;$0A	32x50 text
+;$0B	32x25 text
+;$80	320x240@256c ;40x30 text
+
+;Keyboard Key	SNES Equivalent
+;X or Ctrl	        A
+;Z or Alt	        B
+;S	                X
+;A	                Y
+;D	                L
+;C	                R
+;Shift	            SELECT
+;Enter	            START
+;Cursor Up	        UP
+;Cursor Down	    DOWN
+;Cursor Left	    LEFT
+;Cursor Right	    RIGHT
+
+ ;                       128  64  32  16  8   4   2   1
+; .A, byte 0:           | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+;                  SNES | B | Y |SEL|STA|UP |DN |LT |RT |;;
+
+ ;     .X, byte 1:      | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+ ;                 SNES | A | X | L | R | 1 | 1 | 1 | 1 |
+ ;     .Y, byte 2:
 jmp start
 
-.include "macros.s"
+iCurrentWindow: .byte $0    ;current workingn window: 0=Left, 1=Right
 
-;Read the state of joystick buttons, and trigger press-events if needed
+sGeneral: .res 200,$41        ;General purpose variable
+sGeneral2: .res 200,$42        ;General purpose variable
+
+ParamBuffer: .asciiz "12345678901234567890"    ;20 bytes
+
+;Settings:
+SET_SHOWDATE: .byte 0
+SET_SHOWTIME: .byte 0
+SET_SHOWSIZE: .byte 0
+SET_SHOWTYPE: .byte 0
+SET_DATE_LEN: .byte 10
+.byte 0,0,0,0
+SET_MAX_FILES_COUNT: .byte 129  ;200 fits in 1 rambank
+.byte 0,0,0,0
+SET_RECORD_LENGTH: .byte 40
+
+
+JOY_NUMBER: .byte $1    ;0=keyboard, 1=joy1
+
+
+JOY_PRESENT: .byte $0
+
+JOY_PRESSED_A: .byte $0   
+JOY_STATUS_A: .byte $0  ;0=wait for press, 1=wait for release
+
+DEFAULT_MODAL_WIDTH: .byte 40
+
+
+SLASH: .byte "/"
+TMPDIR: .asciiz "/ditiseenhelelenganaam/dirx                                                           "
+
+CAPTION_DIR: .byte "   <dir>"
+
+VERA_PLOT_X: .byte $0
+VERA_PLOT_Y: .byte $0
+
+CNT: .byte $0        
+         
+TMP:  .byte $0
+TMP2: .byte $0
+TMP3: .byte $0
+TMP_VAR: .res 255
+
+LFN_Pointer: .byte $0,$0 ;"  " ; 2 bytes to temporatily store long filename pointer
+
+ListSize: .byte 48  ;lines on screen
+ListCounter: .byte $0
+
+CMD_BUFFER: .res 255    ;max length of CD: and the full path
+CMD_BUFFER_LENGTH: .byte $0
+CMD_BUFFER_RESULT: .res 50
+
+SCREEN_ROWS: .byte $0
+SCREEN_COLS: .byte $0
+
+DOS_DIR_TYPE: .byte $0
+DOS_FILESOLD: .byte "$=t:*=p" ;prg files ;"$=t"  ;
+DOS_FILES: .byte "$=l:*=p" ;prg files ;"$=t"  ;
+DOS_FILES_END: .byte $0
+
+DOS_DIROLD: .byte "$=t:*=d"    ;dirs ;"$=t"  ;
+DOS_DIR: .byte "$=l:*=d"    ;dirs ;"$=t"  ;
+DOS_DIR_END: .byte $0
+
+
+DOS_FILEEXISTS: .asciiz "$:[f]"
+DOS_CURDIR: .asciiz "cd:[c]"
+DOS_CURDIROTHER: .asciiz "cd:[p]"
+
+DOS_CMD_DEVICE: .byte 0
+
+
+OFFSET_CURRENT: .byte $0    
+OFFSET_LEFT: .byte $0
+OFFSET_RIGHT: .byte $0
+
+ROW_CURRENT: .byte $00   ;Number of the highlighted screen row
+ROW_LEFT: .byte $00
+ROW_RIGHT: .byte $00
+
+DIR_CURRENT: .res 500    ;current path
+DIR_LEFT:    .res 500
+DIR_RIGHT:   .res 500
+
+DEVICE_CURRENT: .byte 0
+DEVICE_OTHER:   .byte 0
+DEVICE_LEFT: .byte 0
+DEVICE_RIGHT: .byte 0
+DEVICE_START: .byte 0
+
+
+PARTITION_CURRENT: .byte 0
+PARTITION_LEFT: .byte 0
+PARTITION_RIGHT: .byte 0
+PARTITION_OTHER: .byte 0
+PARTITION_START: .byte 0
+
+PAGE_CURRENT: .byte 0
+PAGE_LEFT: .byte 0
+PAGE_RIGHT: .byte 0
+
+
+
+MODE_CURRENT: .byte 0
+MODE_LEFT: .byte 0
+MODE_RIGHT: .byte 0
+MODE_OTHER: .byte 0
+
+CNT_PARTITIONS: .byte 0
+
+
+FILECOUNT_CURRENT: .byte $0
+FILECOUNT_LEFT: .byte $0
+FILECOUNT_RIGHT: .byte $0
+
+EMPTY_LINE: .res 38,$20
+            
+
+COL_OFFSET: .byte 1
+
+BlankLine: .byte $20
+
+MODAL_COL: .byte $0
+MODAL_ROW: .byte $0
+
+MODAL_COL_COUNT: .byte $0
+MODAL_ROW_COUNT: .byte $0
+
+MODAL_WIDTH: .byte $0
+MODAL_HEIGHT: .byte $0
+
+MODAL_SCREEN_BACKUP: .res 2000  ;write to a memorybank, saves a lot of space
+
+CopyAddrCount: .byte $0 ;cnt is stored for memcopy
+
+LFNBufferTmp: .res 255
+
+TSRTYPE: .byte $00
+TSRPRG: .asciiz "[s]/[f]" 
+
+
+JOY_BTN_A_COUNTDOWN: .byte $0
+
+JOY_BTN_DOWN_COUNTDOWN: .byte $0
+JOY_PRESSED_DOWN: .byte $0
+
+JOY_BTN_UP_COUNTDOWN: .byte $0
+JOY_PRESSED_UP: .byte $0
+
+JOY_BTN_RIGHT_COUNTDOWN: .byte $0
+JOY_PRESSED_RIGHT: .byte $0
+
+JOY_BTN_LEFT_COUNTDOWN: .byte $0
+JOY_PRESSED_LEFT: .byte $0
+
+JOY_BTN_B_COUNTDOWN: .byte $0
+JOY_PRESSED_B: .byte $0
+
+JOY_BTN_L_COUNTDOWN: .byte $0
+JOY_PRESSED_L: .byte $0
+
+JOY_BTN_R_COUNTDOWN: .byte $0
+JOY_PRESSED_R: .byte $0
+
+JOY_BTN_SELECT_COUNTDOWN: .byte $0
+JOY_PRESSED_SELECT: .byte $0
+
+
+JOY_PRESS_DELAY: .byte 10
+
+
+
+LAST_RDTIM: .byte $0
+
+.macro StoreCurrentAInMemoryMacro
+    sta (ZP_PTR)
+    pha
+ 
+        
+            clc
+            lda ZP_PTR    ;load low byte
+            adc #1
+            sta ZP_PTR
+            bcc :+
+            inc ZP_PTR+1
+            :
+            
+    
+ 
+    pla
+   ; jsr IncBankPointer 
+.endmacro
+
+.macro IncBankpointerBy value
+    phy
+        ldy #value
+        :
+            jsr IncBankPointer
+            dey
+            cpy #0
+            bne :-
+            
+    
+    ply
+.endmacro
+
+.macro DecUntilZero addr
+    pha
+        lda addr
+        cmp #0
+        beq :+
+        dec addr  
+    :
+    pla
+
+.endmacro
+
+.macro CopyMemoryBank Source,Dest
+    .scope
+        lda ZP_RAMBANK
+        pha
+            lda #<RAMBANK
+            sta ZP_PTR
+            lda #>RAMBANK
+            sta ZP_PTR+1
+            
+            @lp:
+                lda #Source
+                sta ZP_RAMBANK
+                lda (ZP_PTR)
+                pha
+                    lda #Dest
+                    sta ZP_RAMBANK
+                pla
+                sta (ZP_PTR)
+                jsr IncBankPointer
+                
+                lda ZP_PTR
+                cmp #$00
+                bne @lp
+                lda ZP_PTR+1
+                cmp #$c0
+                bne @lp
+                
+        pla
+        sta ZP_RAMBANK
+    
+    .endscope
+    
+.endmacro
+
+.macro HandleJoyPress JOY_COUNTDOWN,JOY_PRESSED
+ 
+    lda JOY_COUNTDOWN
+    cmp #0
+    bne :+   ;countdown busy, no new trigger
+
+    lda #1
+    sta JOY_PRESSED
+    lda JOY_PRESS_DELAY
+    sta JOY_COUNTDOWN ; ticks, no new trigger 
+
+    :
+ 
+.endmacro
+
+
+
 ReadJoystick:
    
     jsr RDTIM
@@ -303,6 +388,8 @@ ReadJoystick:
     DecUntilZero JOY_BTN_SELECT_COUNTDOWN
     
 
+
+
    @Done:
 
     ;check if a button is pressed
@@ -317,10 +404,9 @@ ReadJoystick:
     stz JOY_PRESSED_SELECT
     
      
-    lda #JOY_NUMBER  ;0=keyboard, 1=first joystick
+    lda JOY_NUMBER  ;0=keyboard, 1=first joystick
     jsr joystick_get 
    
-    ;TODO: TMP sta/lda can probably be removed. Test with real joystick
     sta TMP
     and #8
     beq Goto_JoyButtonUp 
@@ -333,6 +419,7 @@ ReadJoystick:
     and #32
     beq Goto_JoyButtonSelect  
 
+    
     lda TMP
     and #1
     beq Goto_JoyButtonRight  
@@ -368,7 +455,6 @@ Goto_JoyButtonDown: jmp JoyButtonDown
 Goto_JoyButtonUp: jmp JoyButtonUp
 Goto_JoyButtonSelect: jmp JoyButtonSelect
 
-
 JoyButtonA:   
     HandleJoyPress JOY_BTN_A_COUNTDOWN,JOY_PRESSED_A
 rts
@@ -380,6 +466,7 @@ rts
 JoyButtonL:   
     HandleJoyPress JOY_BTN_L_COUNTDOWN,JOY_PRESSED_L
 rts
+
 
 JoyButtonDown: 
     HandleJoyPress JOY_BTN_DOWN_COUNTDOWN,JOY_PRESSED_DOWN
@@ -406,7 +493,6 @@ JoyButtonSelect:
 rts
 
 
-;Copy all variables from the selected window into the 'CURRENT' variables
 ReadWindowVars:
     pha
     phx
@@ -444,7 +530,7 @@ ReadWindowVars:
 
             lda FILECOUNT_RIGHT
             sta FILECOUNT_CURRENT
-            jsr SetRambank63        ;DIR_RIGHT is on rambank 63
+        
             ldx #0
             :
                 lda DIR_RIGHT,x
@@ -454,7 +540,7 @@ ReadWindowVars:
                 beq :+
                 jmp :-
             :
-            jsr RestoreRambank      
+
             
         jmp @SwitchDone
         
@@ -491,7 +577,7 @@ ReadWindowVars:
 
             lda FILECOUNT_LEFT
             sta FILECOUNT_CURRENT
-            jsr SetRambank63     ;DIR_RIGHT is on rambank 63
+        
             ldx #0
             :
                 lda DIR_LEFT,x
@@ -501,14 +587,12 @@ ReadWindowVars:
                 beq :+
                 jmp :-
             :
-            jsr RestoreRambank
         @SwitchDone:
     plx
     pla
 
 rts
 
-;Copy all vars from the current window to its designated vars
 StoreWindowVars:
     pha
     phx 
@@ -536,8 +620,8 @@ StoreWindowVars:
             lda FILECOUNT_CURRENT
             sta FILECOUNT_RIGHT
 
-            jsr SetRambank63
-            ldx #0  
+        
+            ldx #0
             :
                 lda DIR_CURRENT,x
                 sta DIR_RIGHT,x
@@ -546,7 +630,6 @@ StoreWindowVars:
                 beq :+
                 jmp :-
             :        
-            jsr RestoreRambank
         jmp @SwitchDone
         @DoLeftWindow:
            
@@ -571,7 +654,7 @@ StoreWindowVars:
             lda FILECOUNT_CURRENT
             sta FILECOUNT_LEFT
 
-            jsr SetRambank63
+        
             ldx #0
             :
                 lda DIR_CURRENT,x
@@ -581,357 +664,260 @@ StoreWindowVars:
                 beq :+
                 jmp :-
             :
-            jsr RestoreRambank
         @SwitchDone:
     plx
     pla
 
 rts
 
-;Switch active window from left to right or right to left
+
 SwitchWindow:
-    jsr StoreWindowVars         ;Store vars of 'old' window
+    
+     
+    jsr StoreWindowVars
     
     
         lda iCurrentWindow
         cmp #0
-        beq @ToRightWindow
+        beq @ToRightWindow;ToLeftWindow
             lda #0
-            sta iCurrentWindow 
+            sta iCurrentWindow  ;left window
             lda #1
-            sta COL_OFFSET      ;Set print offset to #1
+            sta COL_OFFSET
         jmp @SwitchDone
-        @ToRightWindow:     
+        @ToRightWindow:       ;ToRightWIndow
             lda #1
             sta iCurrentWindow
             
             lda #2
             clc
             adc WINDOW_WIDTH
-            sta COL_OFFSET      ;Set print offset to WINDOW_WIDTH+2
+            sta COL_OFFSET
         @SwitchDone:
-    jsr ReadWindowVars          ;Read vars of 'new' window
+    jsr ReadWindowVars
+   
+      
 rts
 
 
+.macro CountUntilZero addr,paramcount
+    phy
+    pha
+        ldy #0
+        :
+            lda addr,y
+            iny
+            cmp #0
+            bne :-
+        dey
+        sty paramcount
+    
+    pla
+    ply
+    
+.endmacro
+
+.macro PrintUntilZero addr
+    pha
+    phy
+        ldy #0
+        :
+            lda addr,Y
+            cmp #0
+            beq :+
+            jsr CHROUT
+            iny
+            jmp :-
+        :
+    ply
+    pla
+.endmacro
+
+.macro CopyAddr aFrom,aTo,acnt
+   lda #<aFrom
+   sta ZP_COPY_S
+   lda #>aFrom
+   sta ZP_COPY_S+1
+   
+   lda #<aTo
+   sta ZP_COPY_D
+   lda #>aTo
+   sta ZP_COPY_D+1
+   
+   phy
+   pha   
+       ldy #0
+      :  ;next
+      lda (ZP_COPY_S),y
+      sta (ZP_COPY_D),y
+      iny
+      cpy acnt
+      beq :+   ;done
+      bra :-   ;next
+   :  ;done
+   sty CopyAddrCount ;amount copied
+   pla
+   ply
+
+   
+   
+.endmacro
+
+;would be better in a subroutine, but this is easier
+.macro CopyAddrUntilZero aFrom,aTo,aStoreCnt
+   lda #<aFrom
+   sta ZP_COPY_S
+   lda #>aFrom
+   sta ZP_COPY_S+1
+   
+   lda #<aTo
+   sta ZP_COPY_D
+   lda #>aTo
+   sta ZP_COPY_D+1
+   
+   phy
+   pha   
+      ldy #0
+      :  ;next
+      lda (ZP_COPY_S),y
+      sta (ZP_COPY_D),y
+      iny
+      cmp #0
+      beq :+   ;done
+      cpy #$FF    ;max 255 bytes
+      beq :+   ;done
+      bra :-   ;next
+   :  ;done
+     .if     .paramcount = 3
+      sty aStoreCnt ;bytes copied, only if third parameter is given
+      .endif
+   pla
+   ply
+
+.endmacro
+
+.macro PrintLine addr
+   lda #<addr
+   sta ZP_TEXT_PRT
+   lda #>addr
+   sta ZP_TEXT_PRT+1
+   jsr PrintText 
+.endmacro
+
+.macro PrintChar addr,cnt
+    
+ 
+    phy
+        ldy #0
+
+       :        ;NextChae
+            lda (addr)
+            jsr CHROUT
+            jsr IncBankPointer
+            iny
+            
+            cpy #cnt
+            beq :+      ;ToDone
+        
+            bra :-      ;To NextChar
+        :       ;Done
+    ply  
+   
+   
+.endmacro
+
+.macro PrintCharVera addr,cnt
+
+ 
+    phy
+        ldy #0
+
+       : ;NextChar
+            lda (addr)
+            jsr ConvertPetsciiToVera
+           
+        
+        
+            STA $9F23
+            jsr IncBankPointer
+            iny
+            
+            cpy #cnt
+            beq :+      ;ToDone
+        
+            bra :-      ;To NextChar
+        : ;Done
+    ply  
+   
+   
+.endmacro
+
+.macro PrintACharVera cnt
+
+ 
+    phy
+        ldy #0
+
+       :        ;NextChae
+            ;lda (addr)
+            ;jsr CHROUT
+            ;adc #56
+            jsr ConvertPetsciiToVera
+            STA $9F23
+            ;jsr IncBankPointer
+            iny
+            
+            cpy #cnt
+            beq :+      ;ToDone
+        
+            bra :-      ;To NextChar
+        :       ;Done
+    ply  
+   
+   
+.endmacro
 
 
 
-;When printing text by writing to VRAM replace $0-bytes by spaces $20
 ConvertPetsciiToVera:
+    cmp #$40
+    bpl @DoConvert
     cmp #0
-    beq MakeSpace
-    rts
-    
-    MakeSpace:
+    bne @doRts
     lda #$20
-    rts
-    
-    
-;Set charset to ISO and load appropriate font  
-SetCharsetIso:
+    @doRts:
+    rts ;no convert necesarry
+    @DoConvert:
+    sbc #$40
 
+    
+    
+rts
+
+SetCharset:
+     ;set correct charset
+    clc
+    lda #2
+    jsr $FF62 
+   ; jsr WaitKey
+rts
+
+SetCharsetIso:
+     ;set correct charset
     clc
     lda #1
-    jsr screen_set_charset 
-    
-    lda #$0F ;E
-    jsr CHROUT
-    
-    
-    ;alter some chars in VRAM to draw borders
-    lda #$00
-    sta $9F20
-    lda #$F5
-    sta $9F21
-    lda #$11
-    sta $9F22
-    
-    ;Vertical line
-    lda #%00011000
-    sta $9F23
-
-    lda #%00011000
-    sta $9F23
-
-    lda #%00011000
-    sta $9F23
-
-    lda #%00011000
-    sta $9F23
-
-    lda #%00011000
-    sta $9F23
-
-    lda #%00011000
-    sta $9F23
-    
-    lda #%00011000
-    sta $9F23
-
-    lda #%00011000
-    sta $9F23
-
-;Horizontal line
-    lda #%00000000
-    sta $9F23
-
-    lda #%00000000
-    sta $9F23
-
-    lda #%00000000
-    sta $9F23
-
-    lda #%11111111
-    sta $9F23
-
-    lda #%11111111
-    sta $9F23
-
-    lda #%00000000
-    sta $9F23
-    
-    lda #%00000000
-    sta $9F23
-
-    lda #%00000000
-    sta $9F23
- 
-;Corner top left
-    lda #%00000000
-    sta $9F23
-
-    lda #%00000000
-    sta $9F23
-
-    lda #%00000000
-    sta $9F23
-
-    lda #%00000111
-    sta $9F23
-
-    lda #%00001111
-    sta $9F23
-
-    lda #%00011100
-    sta $9F23
-    
-    lda #%00011000
-    sta $9F23
-
-    lda #%00011000
-    sta $9F23 
-
-;Corner top right
-    lda #%00000000
-    sta $9F23
-
-    lda #%00000000
-    sta $9F23
-
-    lda #%00000000
-    sta $9F23
-
-    lda #%11100000
-    sta $9F23
-
-    lda #%11110000
-    sta $9F23
-
-    lda #%00111000
-    sta $9F23
-    
-    lda #%00011000
-    sta $9F23
-
-    lda #%00011000
-    sta $9F23     
-
-;T
-    lda #%00000000
-    sta $9F23
-
-    lda #%00000000
-    sta $9F23
-
-    lda #%00000000
-    sta $9F23
-
-    lda #%11111111
-    sta $9F23
-
-    lda #%11111111
-    sta $9F23
-
-    lda #%00011000
-    sta $9F23
-    
-    lda #%00011000
-    sta $9F23
-
-    lda #%00011000
-    sta $9F23     
-
-;A5 Vertical with right notch
-    lda #%00011000
-    sta $9F23
-
-    lda #%00011000
-    sta $9F23
-
-    lda #%00011000
-    sta $9F23
-
-    lda #%00011111
-    sta $9F23
-
-    lda #%00011111
-    sta $9F23
-
-    lda #%00011000
-    sta $9F23
-    
-    lda #%00011000
-    sta $9F23
-
-    lda #%00011000
-    sta $9F23 
-
-;A6 cross
-    lda #%00011000
-    sta $9F23
-
-    lda #%00011000
-    sta $9F23
-
-    lda #%00011000
-    sta $9F23
-
-    lda #%11111111
-    sta $9F23
-
-    lda #%11111111
-    sta $9F23
-
-    lda #%00011000
-    sta $9F23
-    
-    lda #%00011000
-    sta $9F23
-
-    lda #%00011000
-    sta $9F23 
-
-;A7 Vertical with left notch
-    lda #%00011000
-    sta $9F23
-
-    lda #%00011000
-    sta $9F23
-
-    lda #%00011000
-    sta $9F23
-
-    lda #%11111000
-    sta $9F23
-
-    lda #%11111000
-    sta $9F23
-
-    lda #%00011000
-    sta $9F23
-    
-    lda #%00011000
-    sta $9F23
-
-    lda #%00011000
-    sta $9F23    
-
-;A8 Corner bottom left
-    lda #%00011000
-    sta $9F23
-
-    lda #%00011000
-    sta $9F23
-
-    lda #%00011100
-    sta $9F23
-
-    lda #%00001111
-    sta $9F23
-
-    lda #%00000111
-    sta $9F23
-
-    lda #%00000000
-    sta $9F23
-    
-    lda #%00000000
-    sta $9F23
-
-    lda #%00000000
-    sta $9F23  
- 
-;A9 Corner bottom left
-    lda #%00011000
-    sta $9F23
-
-    lda #%00011000
-    sta $9F23
-
-    lda #%00111000
-    sta $9F23
-
-    lda #%11110000
-    sta $9F23
-
-    lda #%11100000
-    sta $9F23
-
-    lda #%00000000
-    sta $9F23
-    
-    lda #%00000000
-    sta $9F23
-
-    lda #%00000000
-    sta $9F23   
-
-;AA T upside doen
-    lda #%00011000
-    sta $9F23
-
-    lda #%00011000
-    sta $9F23
-
-    lda #%00011000
-    sta $9F23
-
-    lda #%11111111
-    sta $9F23
-
-    lda #%11111111
-    sta $9F23
-
-    lda #%00000000
-    sta $9F23
-    
-    lda #%00000000
-    sta $9F23
-
-    lda #%00000000
-    sta $9F23  
-   
+    jsr $FF62 
+  ;  jsr WaitKey
 rts
 
-;Redraw the entir screen
 Repaintscreen:
+
     sec
     jsr SCREEN_MODE
     sty SCREEN_ROWS
     stx SCREEN_COLS
 
-    jsr SetCharsetIso
+    jsr SetCharset
 
     clc
     ldx #0
@@ -980,10 +966,16 @@ Repaintscreen:
 
     jsr HighlightRow
 rts
+;$:*=P
 
 
-;Check which device numbers are connected nu trying to list files on it and check for an error
 CheckConnectedDevices:
+jmp CheckConnectedDevices_start
+
+    DEVICES_CONNECTED: .res 30,0 
+
+CheckConnectedDevices_start:
+
     lda #8
     sta TMP
     ldy #0
@@ -994,10 +986,10 @@ CheckConnectedDevices:
             ldx TMP
             ldy #15   ;   15=control channel
             jsr SETLFS    
-            CopyAddrUntilZero DOS_FILES,CMD_BUFFER,CNT
-            lda CNT ;#(DOS_FILES_END-DOS_FILES) ; filename length
-            ldx #<CMD_BUFFER
-            ldy #>CMD_BUFFER
+
+            lda (DOS_FILES_END-DOS_FILES) ; filename length
+            ldx #<DOS_FILES
+            ldy #>DOS_FILES
             jsr SETNAM   
             jsr OPEN
             lda #1
@@ -1014,36 +1006,28 @@ CheckConnectedDevices:
         @Next:
             inc TMP
             lda TMP
-            cmp #20
+            cmp #30
             bpl @Done
         
     jmp @lp 
     @Done: 
    
-rts 
+    rts 
 
-;Check to see if current filesystem type is hostfs or sd-card
 GetFSType:
-    lda #1          ; Logical Number = 1
-    ldx $03fe ;#8   ;Device number ($03fe contains the last used device number)
-    ldy #0   
+jmp GetFSType_start
+    DOS_CHECKLIST: .byte "$=qw789nnasdhjgwh"
+    DOS_CHECKLIST_END:
+    FSTYPE: .byte $ff
+GetFSType_start: 
+    lda #1   ; Logical Number = 1
+    ldx $03fe ;#8   ; Device = "SD card" (emulation host FS)
+    ldy #0   ; Secondary Address = 15: dos command channel
     jsr SETLFS
-    
-    
-    ;List with a filter of random chars 'qx' to make sure the length of the result is small
-    lda #'$'
-    sta CMD_BUFFER
-    lda #'='
-    sta CMD_BUFFER+1
-    lda #'q'
-    sta CMD_BUFFER+2
-    lda #'x'
-    sta CMD_BUFFER+3    
-      
-      
-    lda #4 ;#(DOS_CHECKLIST_END-DOS_CHECKLIST) ; command
-    ldx #<CMD_BUFFER
-    ldy #>CMD_BUFFER   
+  
+    lda #(DOS_CHECKLIST_END-DOS_CHECKLIST) ; command
+    ldx #<DOS_CHECKLIST
+    ldy #>DOS_CHECKLIST   
  
     jsr SETNAM
     jsr OPEN
@@ -1069,8 +1053,8 @@ GetFSType:
     @ReadType:
         jsr CHRIN   ;space
         jsr CHRIN   ;H (hostfile) F=fat32
-        sta TMP
-        ;H or F is in the accumulator
+        sta FSTYPE
+    
     @Done:
     jsr CLRCHN
     lda #1
@@ -1080,10 +1064,11 @@ GetFSType:
 rts
 
 Goto_DoneListPartitions: jmp DoneListPartitions
-
-;Load list of partitions and devices into designated rambank
 LoadPartitionsList:
-   
+jmp LoadPartitionsList_start
+    MSG_HOSTFS: .asciiz "hostfs"
+LoadPartitionsList_start:
+    
     lda #RB_PARTITIONS
     sta $00 
     
@@ -1097,15 +1082,15 @@ LoadPartitionsList:
     ldy #0
     @lp:
         lda DEVICES_CONNECTED,y
-  
+
+           
         cmp #0
         beq Goto_DoneListPartitions
         
         phy
             sta $03fe
             jsr GetFSType
-            ;fstype is in TMP
-            lda TMP
+            lda FSTYPE
             
             
             cmp #$48    ;H=hostfs
@@ -1123,65 +1108,48 @@ LoadPartitionsList:
                 inc CNT_PARTITIONS
                 
                 ldy #0
-                ;first two bytes are device number + partition
+                ;frist two bytes are device + partition
                 lda $03fe
-                jsr StoreCurrentAInMemory
+                StoreCurrentAInMemoryMacro
                 iny
                 lda #0
-                jsr StoreCurrentAInMemory
+                StoreCurrentAInMemoryMacro
                 iny
                 
                 clc
                 lda $03fe
                 adc #$30
-                jsr StoreCurrentAInMemory
+                StoreCurrentAInMemoryMacro
                 iny
                 lda #COLON
-                jsr StoreCurrentAInMemory
+                StoreCurrentAInMemoryMacro
                 iny
                 
-                ;This is ugly, refactor some day
-                lda #'H'
-                jsr StoreCurrentAInMemory
-                iny
-
-                lda #'O'
-                jsr StoreCurrentAInMemory
-                iny
-
-                lda #'S'
-                jsr StoreCurrentAInMemory
-                iny
-
-                lda #'T'
-                jsr StoreCurrentAInMemory
-                iny
-
-                lda #'F'
-                jsr StoreCurrentAInMemory
-                iny
-
-                lda #'S'
-                jsr StoreCurrentAInMemory
-                iny
-
-                                
+                ldx #0
+                @lp2:
+                    lda MSG_HOSTFS,x
+                    inx
+                    iny
+                    StoreCurrentAInMemoryMacro
+                    cmp #0
+                    bne @lp2 
+                
                 lda #0
-                jsr StoreCurrentAInMemory
+                StoreCurrentAInMemoryMacro
                 iny
                 
                 @lp3:
                     lda #$20
-                    jsr StoreCurrentAInMemory
+                    StoreCurrentAInMemoryMacro
                     iny
-                    cpy #SET_RECORD_LENGTH
+                    cpy SET_RECORD_LENGTH
                     bne @lp3
                     
                 jsr DecBankPointer
                 jsr DecBankPointer
                 jsr DecBankPointer
                 lda #$41
-                jsr StoreCurrentAInMemory
+                StoreCurrentAInMemoryMacro
                 jsr IncBankPointer
                 jsr IncBankPointer
                 
@@ -1195,29 +1163,25 @@ LoadPartitionsList:
 
 rts
 
-;Read partition table of device and store into devices/partitions rambank
 ReadPartitionTable:
+jmp ReadPartitionTable_start
+    DOS_LIST_PARTITIONS: .byte "$=p"
+    DOS_LIST_PARTITIONS_END:
+
+ReadPartitionTable_start: 
     phy
     phx
         lda $03fe
 
-        lda #1  
-        ldx $03fe 
+        lda #1   ; Logical Number = 1
+        ldx $03fe ;#8   ; Device = "SD card" (emulation host FS)
 
-        ldy #0  
+        ldy #0   ; Secondary Address = 15: dos command channel
         jsr SETLFS
-        
-        lda #'$'
-        sta CMD_BUFFER
-        lda #'='
-        sta CMD_BUFFER+1
-        lda #'p'
-        sta CMD_BUFFER+2
-        
     
-        lda #3
-        ldx #<CMD_BUFFER
-        ldy #>CMD_BUFFER
+        lda #(DOS_LIST_PARTITIONS_END-DOS_LIST_PARTITIONS) ; command
+        ldx #<DOS_LIST_PARTITIONS
+        ldy #>DOS_LIST_PARTITIONS
     
         jsr SETNAM
         jsr OPEN
@@ -1262,7 +1226,7 @@ ReadPartitionTable:
             jsr CHRIN
             sta TMP ;partition number
             jsr CHRIN
-
+          ;  jsr print_hex
             ldx #1  ;find next "
         jmp @lp
         
@@ -1274,21 +1238,21 @@ ReadPartitionTable:
             ldy #0
             ;store device
             lda $03fe
-            jsr StoreCurrentAInMemory
+            StoreCurrentAInMemoryMacro
             iny
             ;store partition Number
             lda TMP
-            jsr StoreCurrentAInMemory
+            StoreCurrentAInMemoryMacro
             iny
             
             ;store visual device number
             clc
             lda $03fe
             adc #$30
-            jsr StoreCurrentAInMemory
+            StoreCurrentAInMemoryMacro
             iny
             lda #COLON
-            jsr StoreCurrentAInMemory
+            StoreCurrentAInMemoryMacro
             iny
             
             ;store visual partition number
@@ -1296,10 +1260,10 @@ ReadPartitionTable:
             lda TMP
             
             adc #$30
-            jsr StoreCurrentAInMemory
+            StoreCurrentAInMemoryMacro
             iny 
             lda #COLON
-            jsr StoreCurrentAInMemory
+            StoreCurrentAInMemoryMacro
             iny
 
             
@@ -1310,27 +1274,27 @@ ReadPartitionTable:
         @StoreName:
             cmp #$22    ;"
             beq @FinishLine
-            jsr StoreCurrentAInMemory
+            StoreCurrentAInMemoryMacro
             iny       
             
         jmp @lp
         
         @FinishLine:
             lda #0
-            jsr StoreCurrentAInMemory
+            StoreCurrentAInMemoryMacro
             iny           
             ;add spaces
             @lp2:
                 lda #$20
-                jsr StoreCurrentAInMemory
+                StoreCurrentAInMemoryMacro
                 iny
-                cpy #SET_RECORD_LENGTH
+                cpy SET_RECORD_LENGTH
                 bne @lp2
                 jsr DecBankPointer
                 jsr DecBankPointer
                 jsr DecBankPointer
                 lda #$41
-                jsr StoreCurrentAInMemory
+                StoreCurrentAInMemoryMacro
                 jsr IncBankPointer
                 jsr IncBankPointer
             
@@ -1349,12 +1313,25 @@ rts
 
 Goto_SelectSupportedScreenmode: jmp SelectSupportedScreenmode
 
-;Main/Begin
+
 start:
-    jsr ResetVera
-    jsr SetCharsetIso
+   ; rts
+    lda $03fe
+    pha
+        jsr CheckConnectedDevices   ;list available devices
+        jsr LoadPartitionsList
+    pla
+    sta $03fe
+    ;begin
+    
+    ;03fe = address of current device number
+    
+    
 
-
+    stz LAST_RDTIM
+    ;initialize vera ctrl to use DATA_0
+    LDA #$00
+    STA $9F25   ;VERA CTRL
 
     ;check screen mode
     sec
@@ -1363,36 +1340,27 @@ start:
     sty SCREEN_ROWS
     stx SCREEN_COLS
 
-    cpx #39 ;if less then 40 columns, ask to select another screen mode
+    cpx #39 ;less then 40 cols
     bmi Goto_SelectSupportedScreenmode
     
-
-    lda $03fe   ;address of current device number
-    pha
-        jsr CheckConnectedDevices   ;list available devices
-        jsr LoadPartitionsList      ;list partitionlist of sd-device(s)
-    pla
-    sta $03fe
-
     
-    ;initialize vera ctrl to use DATA_0
-    LDA #$00
-    STA $9F25   ;VERA CTRL
+    ;store current directory in CUR_PATH
+    jsr GetStartDirectory   
+    jsr StoreStartDirInVRAM
 
-    
-    ;print window outline, header and footer    
+   
     jsr PrintMainScreen2 
-
-    
-    ;intialize variables
+ 
+   
     stz OFFSET_LEFT
     stz OFFSET_RIGHT
     stz iCurrentWindow
     stz PAGE_LEFT
     stz PAGE_RIGHT
     
+    
 
-    ;Somehow devicenumber #0 means devicenumber #8, so lets put #8 in it for future reference
+
     lda $03fe   ;address of current device number
     cmp #0
     bne @StoreDevice    ;if 0, it is suppoed to be 8
@@ -1400,51 +1368,43 @@ start:
     sta $03fe
     
     @StoreDevice:
-    ;set all device vars to #8
+    ;lda #9  ;how to dertermine the current device???
     sta DEVICE_CURRENT
     sta DEVICE_LEFT
     sta DEVICE_RIGHT
     sta DEVICE_START
 
-    ;Get the current partitionnumber (if on sd-card) and store in partition-vars
+    
+    
+    
     jsr GetCurrentPartition
-
-    ;store current directory in CUR_PATH
-    ;This directory is used for the RAM version to reload fm.prg
-    jsr GetStartDirectory2  
-
-    ;Save start up partition, to load FM.PRG in ram version      
     lda PARTITION_CURRENT
     sta PARTITION_START
     
     lda #0                  ;set current window to left window
     sta iCurrentWindow
-        jsr SetRambank63
-            lda #$2F   ;init dirs to root \     ;TODO: use current directory!!!!
-            sta DIR_LEFT 
-            lda #$0
-            sta DIR_LEFT+1  ;end with $0           
-        jsr RestoreRambank
+        lda #$2F   ;init dirs to root \
+        sta DIR_LEFT 
+        lda #$0
+        sta DIR_LEFT+1  ;end with $0           
+
 
         jsr ReadWindowVars
+        
             jsr LoadCurrentDir2
             jsr ShowFiles2
         jsr StoreWindowVars
 
     jsr SwitchWindow    ;switch to right window
-   
-        jsr SetRambank63
-            lda #$2F   ;init dirs to root \
-            sta DIR_RIGHT
-            lda #$0
-            sta DIR_RIGHT+1     ;end with $0
-        jsr RestoreRambank
+        lda #$2F   ;init dirs to root \
+        sta DIR_RIGHT
+        lda #$0
+        sta DIR_RIGHT+1     ;end with $0
         
         jsr ReadWindowVars
-
-            ;check if both dirs are the same. If so just copy rambanks instead of rereading the file lists (quicker)
-            jsr SetRambank63
-        
+         
+           ; jsr LoadCurrentDir
+            ;check if both dirs are the same
             ldy #0
             :
                 lda DIR_LEFT,y
@@ -1455,46 +1415,69 @@ start:
                 iny
                 jmp :-
             @DoCopy:
-              
             CopyMemoryBank RB_FILES_LIST_LEFT,RB_FILES_LIST_RIGHT
             CopyMemoryBank RB_LONGFILENAMES_LEFT,RB_LONGFILENAMES_RIGHT
-        
             lda FILECOUNT_LEFT
             sta FILECOUNT_RIGHT
             sta FILECOUNT_CURRENT
             jmp DoShow
             DoLoad:
-            jsr RestoreRambank
             jsr LoadCurrentDir2
             DoShow:
-            jsr RestoreRambank
             jsr ShowFiles2
         jsr StoreWindowVars
     jsr SwitchWindow 
+    
+   ;  jsr RDTIM
+   ; jsr print_hex
+   ; txa 
+   ; jsr print_hex
+   ; tya
+   ; jsr print_hex
+   ; jsr print_lf
+       
+ ;rts
+  ;  lda #0                  ;set current window to left window
+  ;  sta iCurrentWindow
+
+      
+    clc
+    
+    jsr HighlightRow
+   
+        lda #0
+        jsr joystick_scan
+        lda JOY_NUMBER
+        jsr joystick_get
+       ; cpy #$ff    ;no joystick present
+      ;  bne lp  ;no joystick
+  
+        
+        ;Joystick Present:
+        lda #1
+        sta JOY_PRESENT
+        
    
 
-    
-    
-    clc
-    ;Highlight first row of active window
-    jsr HighlightRow
-
-    
-    
-    ;Don't know if these 4 lines are needed anymore. Check someday with real joystick
-    lda #0
-    jsr joystick_scan
-    lda #JOY_NUMBER
-    jsr joystick_get
-
-         
-    lp:     ;main program loop
+;jsr CopyAFile
+;rts
        
-       
-        lda #JOY_PRESENT
+    
+
+    lp:
+      ;  clc
+      ;  ldx #1
+      ;  ldy #0
+      ;  jsr PLOT
+      ;  lda JOY_PRESENT
+        
+      ;  jsr print_hex
+      
+        
+        lda JOY_PRESENT
         cmp #1
-        bne SkipJoystickHandling        ;If no controler is present, dont bother check input
-             ;Check (SNES) controller
+        bne SkipJoystickHandling
+             ;Check SNES controller
             jsr ReadJoystick
            
             lda JOY_PRESSED_A
@@ -1525,7 +1508,7 @@ start:
             ;---- Actions that cannot performed on select partition mode
             ldx MODE_CURRENT
             cpx #0
-            bne @SkipIfNotMode0Joy
+            bne @SkipIfNotMode0Joy ;--------------------------------
 
                 lda JOY_PRESSED_B
                 cmp #1
@@ -1541,20 +1524,16 @@ start:
             beq Goto_PlusPress2
 
         jmp SkipJoystickHandling
-        
             Goto_SelectPartition2:  jmp SelectPartition
             Goto_EnterPress2:       jmp EnterPress
             
         SkipJoystickHandling:
-
-                
-        ;Check keyboard input      
+       
         jsr GETIN
-
         cmp #$0
         beq lp
-        
 
+     
         cmp #$11    ;Down
         beq Goto_RowDown
         
@@ -1581,7 +1560,6 @@ start:
        
        jmp SkipJumpBit
             ;Jump table
-            Goto_ShowJoyOptions:    jmp ShowJoyOptions
             Goto_MinusPress2:       jmp MinusPress
             Goto_PlusPress2:        jmp PlusPress
             Goto_RowUp:             jmp RowUp
@@ -1601,6 +1579,7 @@ start:
             Goto_RenameFile:        jmp RenameFile
             Goto_EditFile:          jmp EditFile
             Goto_BackspacePress:    jmp BackspacePress
+            Goto_ShowJoyOptions:    jmp ShowJoyOptions
             Goto_SelectPartition:   jmp SelectPartition
        SkipJumpBit:
 
@@ -1630,42 +1609,53 @@ start:
             cmp #$8B    ;F6 - rename file
             beq Goto_RenameFile
 
-            cmp #$88    ;F7 - move file    ;not supported on SD-card, until ROM update!!!
+            cmp #$88    ;F7 - move file    ;not supported on SD-card!!!
             beq Goto_MoveCurrentFile
 
-            cmp #$8C    ;F8 - Create directory
+            cmp #$8C    ;F8 - Creade directory
             beq Goto_CreateDirectory
+
 
             cmp #$19    ;DEL- delete file
             beq Goto_DeleteFile
         @SkipIfNotMode0:    ;--------------------------------
        
         pha
-            jsr kbdbuf_get_modifiers   ;get keyboard modifiers
+            jsr $FEC0   ;get keyboard modifiers
             tax ;x contains modifieres
         pla
        
         cpx #04
-        bne @nocontrol  ;is control-key down?
+        bne @nocontrol
             
-            cmp #$2B    ;+  
+            cmp #$2B    ;+
             beq Goto_PlusPress
 
             cmp #$2D    ;-
             beq Goto_MinusPress
         @nocontrol:
         
-           
+       
         
     jmp lp       
+Goto_Charset:     jsr SetCharset
+Goto_ChangeDevice: jmp ChangeDevice
+jmp lp
+Goto_CharsetISO:
+ 
+    jsr SetCharsetIso
+jmp lp
 
-Goto_ChangeDevice:  jmp ChangeDevice
-Goto_LPX:           jmp lp
-Goto_PlusPress:     jmp PlusPress
-Goto_MinusPress:    jmp MinusPress      
+    Goto_LPX:
+        jmp lp
+    Goto_PlusPress:
+        jmp PlusPress
+
+    Goto_MinusPress:
+        jmp MinusPress      
    
+rts
 
-;New partition and/or device selected, so change vars accordingly
 ChangeDevice:
     sec
     sbc #$30
@@ -1673,6 +1663,8 @@ ChangeDevice:
     
     ;reset this side
     
+   
+        
     sta DEVICE_CURRENT
     
     jsr LowlightRow
@@ -1680,22 +1672,25 @@ ChangeDevice:
     stz ROW_CURRENT
     stz PAGE_CURRENT    
     
-    jsr SetRambank63
     lda #$2F
     sta DIR_CURRENT
     lda #0
     sta DIR_CURRENT+1
-    jsr RestoreRambank
+    
     jsr LoadCurrentDir2
     jsr ShowFiles2
     jsr HighlightRow    
 jmp lp
 
-GotoLP3: jmp lp
-
-
-;Load highlighted file in x16edit ROM version
 EditFile:
+jmp EditFile_start
+    FILENAME_EDIT: .asciiz "[f]"
+
+
+GotoLP3:
+    jmp lp
+EditFile_start:
+
     jsr SetPointerToCurrentOffset   ;memory pointer to current offset  
     jsr AdvancePointerToCurrentRow
    
@@ -1704,17 +1699,14 @@ EditFile:
     cmp #$44    ;directory    
     beq GotoLP3
     
+ ;   jsr SwitchToCurrentDevice
+ ;   lda DEVICE_CURRENT
+  ;  jsr print_hex
+  ;  jsr WaitKey
+    jsr GotoCurrentDirectory
 
-    jsr GotoCurrentDirectory        ;Set correct device, partition and directory for x16edit to load from
+    CopyAddrUntilZero FILENAME_EDIT,CMD_BUFFER
 
-    lda #'['
-    sta CMD_BUFFER
-    lda #'f'
-    sta CMD_BUFFER+1
-    lda #']'
-    sta CMD_BUFFER+2
-    lda #0
-    sta CMD_BUFFER+3
     
     lda #<CMD_BUFFER
     sta ZP_TEXT_PRT
@@ -1722,30 +1714,42 @@ EditFile:
     sta ZP_TEXT_PRT+1
     
     jsr ReplaceParams   ;replace message params with values      
+ 
 
-   
+    
     CountUntilZero CMD_BUFFER,TMP
+
+    ;
+    ;$02: r0L
+    ;$03: r0H
+    ;$04: r1L
+    ;$05: r1H
+    ;$06: r2L
+    ;$07: r2H
+    ;$08: r3L
+    ;$09: r3H
     
 
-    ldx #0
-    :
-        lda CMD_BUFFER,x
-        sta x16EditFileBuffer,X
-        inx
-        cmp #0
-        bne :-
-
-    ;Set iso mode (probably absolete, because we are already in iso mode)
     lda #$0F
     jsr CHROUT
     
+    lda $01 ; Store current ROM bank on stack
+    pha
 
+    
+        jsr find_me ; Search ROM banks
+        bcs done ; Exit if X16 Edit wasn’t found
+
+
+
+        sta $01 ; Set ROM bank
+        
         ldx #$15 ; First RAM bank used by the editor
-        ldy #60 ; And last RAM bank
-         
-        lda #<x16EditFileBuffer ; Pointer to file name (LSB)
+        ldy #$ff ; And last RAM bank
+        
+        lda #<CMD_BUFFER ; Pointer to file name (LSB)
         sta $02 ; Store in r0L
-        lda #>x16EditFileBuffer ; Pointer to file name (MSB)
+        lda #>CMD_BUFFER ; Pointer to file name (MSB)
         sta $03 ; Store in r0H
         
         lda TMP ; File name length
@@ -1753,31 +1757,72 @@ EditFile:
  
         lda DEVICE_CURRENT
         sta $08        
-        
-        jsr x16Edit
-    done:
 
-    ;When return from x16Edit, repaint screen
+
+
+        jsr $c006 ; Call entry point
+    done:
+    pla
+    sta $01
+    
     
     jsr Repaintscreen
+
+  
        
 jmp lp
 
+find_me:
+jmp find_me_start
+    signature: .byt $58,$31,$36,$45,$44,$49,$54 ; = "X16EDIT"
+find_me_start:
 
-;If joystick button B is pressed, user gets a selection list of actions
-ShowJoyOptions:
-    jsr SetRambank63
-    CopyAddrUntilZero JOYSTICK_MSG,MSG_MODAL,TMP
-    jsr RestoreRambank
+
+    stz $01 ; Prepare searching from ROM bank 0
+    ldy #$00
+
+scan:
+    lda $fff0,y ; Signature starts at $fff0
+    cmp signature,y
+    bne next ; Signature didn’t match, check next ROM bank
+    iny ; Increase char pointer
+    cpy #$07 ; Have we got 7 matching chars? If not, keep looking
+    bne scan
+    clc ; Set C = 0 as indicator X16 Edit was found
+    lda $01 ; Load ROM bank into A
+    bra exit
+    next:
+    ldy #$00 ; Reset char pointer
+    inc $01 ; Select next ROM bank
+    lda $01
+    cmp #$20 ; Have we checked all ROM banks?
+    bne scan
+    sec ; Set C = 1 as indicator X16 Edit was not found
     
+exit:
+
+rts    
+
+ShowJoyOptions:
+jmp ShowJoyOptions_start
+    JOYSTICK_MSG: .asciiz "#  info#  edit#  copy#  rename#  move#  mkdir#  delete###  point and press a, b to exit  "
+    JOYSTICK_CUR_LINE: .byte $0
+
+ShowJoyOptions_start:
+    CopyAddrUntilZero JOYSTICK_MSG,MSG_MODAL,TMP
+
     stz JOYSTICK_CUR_LINE
     
     lda #<MSG_MODAL
     sta ZP_TEXT_PRT
     lda #>MSG_MODAL
     sta ZP_TEXT_PRT+1
- 
-    ldy #DEFAULT_MODAL_WIDTH     ;width
+    
+    
+  
+
+
+   ldy DEFAULT_MODAL_WIDTH     ;width
     ldx #17     ;height
     jsr ShowModal
     jsr ShowModalMsg
@@ -1811,7 +1856,6 @@ ShowJoyOptions:
     jsr LoopThroughModelWindow  ;Restore screen    
 jmp lp
 
-;Moves highlighted row one up on action selection
 JoyOptionsPrevLine:
     lda JOYSTICK_CUR_LINE
     cmp #0
@@ -1821,7 +1865,6 @@ JoyOptionsPrevLine:
     jsr JoyOptionsShowSelect
 jmp lpjoy
 
-;Moves highlighted row one down on action selection
 JoyOptionsNextLine:
     lda JOYSTICK_CUR_LINE
     cmp #6  ;7 options to choose from
@@ -1831,7 +1874,6 @@ JoyOptionsNextLine:
     jsr JoyOptionsShowSelect
 jmp lpjoy
 
-;Action selected
 JoyOptionsAPress:
     jsr ClearKeyboardBuffer
     lda #2
@@ -1863,7 +1905,6 @@ Goto_MoveCurrentFile3:  jmp MoveCurrentFile
 Goto_CreateDirectory3:  jmp CreateDirectory
 Goto_DeleteFile3:       jmp DeleteFile
 
-;Highlight current action row
 JoyOptionsShowSelect:
 
     ldx MODAL_ROW
@@ -1891,7 +1932,6 @@ JoyOptionsShowSelect:
     jsr ResetColor
 rts
 
-;Remove highlight current action row
 JoyOptionsHideSelect:
 
     ldx MODAL_ROW
@@ -1918,11 +1958,10 @@ JoyOptionsHideSelect:
     jsr ResetColor
 rts
 
-;Backspace results in change dir to parent directory
 BackspacePress:
 
 
-    jsr SetRambank63
+    
     ;loop to end of path. x contains end pos
     ldx #0
     @next:
@@ -1935,6 +1974,9 @@ BackspacePress:
     @Loopdone:
     cpx #1
     beq @GotoLp     ;already in root
+    
+    ;remove last dir
+    ;x contains end, so reverseloop to /
     
     dex
     :   ;LoopNext
@@ -1966,33 +2008,36 @@ BackspacePress:
     stz ROW_CURRENT
     stz PAGE_CURRENT
     
-    jsr RestoreRambank
-    jsr LoadCurrentDir2
+    jsr LoadCurrentDir
     jsr ShowFiles2
     jsr HighlightRow
     
     jmp lp
+@GotoLp:
+  
+    
+jmp lp
 
-@GotoLp:                jmp lp
-Goto_ChangeDirDown:     jmp ChangeDirDown
+
+File: .byte "/launch.prg"       ;verplaatst naar fm.prg, dus niet druk  maken om locatie
+FIleEnd:
+LaunchSYS: .asciiz "sys 32781"
+CURFILE: .res 100
+Goto_ChangeDirDown:   jmp ChangeDirDown
 Goto_ChangePartition:   jmp ChangePartition
 Goto_NextPage:          jmp NextPage
 Goto_PrevPage:          jmp PrevPage
 
-
-;Enter press, so execute if it is a program or change to selected directory
 EnterPress:
 
     jsr GETIN   ;clear keyboard buffer
     
- 
+    
     ;;-------------------------------------    
     jsr SetPointerToCurrentOffset   ;memory pointer to current offset  
     jsr AdvancePointerToCurrentRow
- 
-
    
-    ldy #37 ;line type 
+    ldy #37 ;line type P or D
     lda (ZP_PTR),y
 
     cmp #$44    ;directory
@@ -2004,7 +2049,8 @@ EnterPress:
     cmp #$3c    ;Goto prev page
     beq Goto_PrevPage
 
-    ;or launch file
+    
+
     CopyAddrUntilZero TSRPRG,CMD_BUFFER,CMD_BUFFER_LENGTH
     lda #<CMD_BUFFER
     sta ZP_TEXT_PRT
@@ -2013,48 +2059,61 @@ EnterPress:
     
     jsr ReplaceParams   ;replace message params with values      
         
-    ;Check header of file to see if it is launchable, no matter the extention
     jsr IsLaunchable
-   
+    
     lda TMP
     cmp #0
     beq GotoLpTmp  ;not launchable
-    jmp AnotherJumpTable
-    GotoLpTmp:    jmp lp
+    jmp Doorgaan
+    GotoLpTmp:
+        jmp lp
     
-    AnotherJumpTable:
-    
+    Doorgaan:
     ;execute program
-
- clc
-    ;store start directory in last 256 bytes of rambank #0
-    jsr StoreStartDirForLauncher
-   
-  
-    ;make sure launch is from the programs directory. (including devicenumber and partition)
-    jsr GotoCurrentDirectory
-
-    ;switch to petscii
-    lda #2
-    jsr screen_set_charset 
-
-    lda #$8F
-    jsr CHROUT
+    ;load path+fm.prg into vram, to be used by launch.prg
+    ;fm.prg should check if path is present, else NOT overwrite!!
+    jsr StoreStartDirInVRAM
+    ;load current folder in a special place in memory
+  ;;  lda #20
+   ; sta $00 ;goto membank 20
     
-    lda #$8E
-    jsr CHROUT
+    ;make sure launch is from the programs directory. Should be changed when launch is via menu
+    jsr GotoCurrentDirectory
+    ;jsr SwitchToCurrentDevice
+    ;jsr ChangeToCurrentDirectory
+    
+    jsr CopyLaunchToMem
    
-    .ifdef uselauncher
-        ;Copy launch program to last bit of basic memory
-        jsr CopyLaunchToMem
-    .endif
+    jmp SkipLoadLaunch
+    
+        lda #1   ; Logical Number = 1
+        ldx #8   ; Device = "SD card" (emulation host FS)
+        ldy #0   ; skip 2 bytes
+        jsr SETLFS  
+        lda #(FIleEnd-File) ; command
+        ldx #<File
+        ldy #>File      
+        jsr SETNAM
+        
+        lda #0
+        ldx #$01
+        ldy #$80
+        
+        jsr LOAD
 
+    SkipLoadLaunch:
+  
 
     jsr clearscreen
     lda #0
     ldx #0
     ldy #1
-
+    clc
+    cld
+    cli
+    clv
+     
+     
     CopyAddrUntilZero TSRPRG,CMD_BUFFER
     
  
@@ -2068,87 +2127,55 @@ EnterPress:
 
     ;Check if is tokenizes Basic
     jsr CheckFileType
-
-    lda TSRTYPE ;B(asic) or A(assembly)
-    sta LAUNCHFILE 
-
-    ;cmd buffer containsfilename to launch. We can store thisin $0400 ram, its just temporary
+   ; jmp  hlt
+    lda TSRTYPE
+    sta $8010
+   ; jsr CHROUT
+   ; jsr WaitKey
+    
     ldy #0
     @thisloop:
         lda CMD_BUFFER,y
         cmp #0
         beq DoLaunch
-        sta LAUNCHFILE+1,y 
-        sta DEBUG
+      ;  jsr CHROUT
+        sta $8011,Y ;8010 contains filetype
         iny
     jmp @thisloop  
     
-    DoLaunch:
-   
-    ;store last zero
-    sta LAUNCHFILE+1,y 
+   ; jmp hlt
     
+    DoLaunch:
+    ;store last zero
+    sta $8011,y
     iny
     lda DEVICE_START
-    sta LAUNCHFILE+1,y ; ;store deviceno of FM.PRG location
+    sta $8011,y ;store deviceno of FM location
     iny
     lda PARTITION_START
-    sta LAUNCHFILE+1,y ; ;store partition of FM.PRG location
+    sta $8011,y ;store partition of FM location
     
-    
-    .ifdef uselauncher
-    
-        ;Run the launcher by execute basic SYS-command via keyboard buffer
-        ldy #0 
-        @nxt:
-            lda LaunchSYS,y
-            cmp #0
-            beq @dn
-            jsr KEY_POKE
-            iny
-        jmp @nxt
-        @dn:
-        lda #$0d
+    ldy #0
+    @nxt:
+        lda LaunchSYS,y
+        cmp #0
+        beq @dn
         jsr KEY_POKE
-    .endif
-
-    .ifndef uselauncher
-        ;Run the launcher by execute basic SYS-command via keyboard buffer
-        ldy #0 
-        @nxt:
-            lda LaunchSYS,y
-            cmp #0
-            beq @dn
-            jsr KEY_POKE
-            iny
-        jmp @nxt
-        @dn:
-        
-        lda #>LaunchMain
-        jsr ConvertAToAsciiHex
-        lda LaunchAddressAscii
-        jsr KEY_POKE 
-        lda LaunchAddressAscii+1
-        jsr KEY_POKE 
-        
-        lda #<LaunchMain
-        jsr ConvertAToAsciiHex
-        lda LaunchAddressAscii
-        jsr KEY_POKE 
-        lda LaunchAddressAscii+1
-        jsr KEY_POKE 
-
-        lda #$0d
-        jsr KEY_POKE        
-    .endif
-    
+        iny
+    jmp @nxt
+    @dn:
+    lda #$0d
+    jsr KEY_POKE
     rts
-   
+    jjj:
+    jmp jjj
+    
 
-GotoLP: jmp lp
+GotoLP:
+jmp lp
 
 
-;Goto selected subdirectory
+
 ChangeDirDown:
     ldy #2
     lda (ZP_PTR),y  ;first byte of filename
@@ -2159,7 +2186,6 @@ ChangeDirDown:
 
 @DoChangeDirDown:
     jsr LowlightRow
-    jsr SetRambank63
     phx
     phy
         ldx #0
@@ -2182,21 +2208,18 @@ ChangeDirDown:
             
             lda #$2F        ;/
             sta DIR_CURRENT,x
-  
             inx
             
             
         @StartAdding:
-        jsr RestoreRambank
-        
+            
         jsr LoadCurrentFileInBuffer
         ldy #0
         @AddNext:   ;add new dir at the end
             
-            jsr SetRambank63
+            
             lda FileInfo_Name,y  ;first byte of filename
             sta DIR_CURRENT,x
-
             cmp #0
             beq @AddDone
             inx
@@ -2228,14 +2251,11 @@ ChangeDirDown:
     stz ROW_CURRENT
     stz PAGE_CURRENT    
     
-    jsr RestoreRambank
-    
-    jsr LoadCurrentDir2
+    jsr LoadCurrentDir
     jsr ShowFiles2
     jsr HighlightRow
 jmp lp
 
-;Change to selected partition
 SelectPartition:
     jsr LowlightRow
     stz OFFSET_CURRENT
@@ -2268,7 +2288,6 @@ GoHome:
 jmp lp
 
 Gogo_LpXXXXx: jmp lp
-
 GoEnd:
     ldx FILECOUNT_CURRENT
     cpx #0
@@ -2276,12 +2295,12 @@ GoEnd:
 
     lda ListSize         
     cmp FILECOUNT_CURRENT
-    bcs MoveToLastItemOnPage
+    bpl MoveToLastItemOnPage
     
     jsr LowlightRow
     lda FILECOUNT_CURRENT   ;cnt files total
     sbc ListSize            ;minus listsize
-
+   ; sbc #2
     sta OFFSET_CURRENT
     lda ListSize
     sbc #1
@@ -2293,6 +2312,7 @@ GoEnd:
 jmp lp
 
 MoveToLastItemOnPage:
+    ;;;;;;TO BE TESTED WITH SMALL DIR
     jsr LowlightRow
     lda FILECOUNT_CURRENT
     sta ROW_CURRENT
@@ -2300,9 +2320,8 @@ MoveToLastItemOnPage:
     jsr HighlightRow
 jmp lp
 
-Goto_Lpxx:    jmp lp
-
-;CTRL +  -> next supported screenmode
+Goto_Lpxx:
+    jmp lp
 PlusPress:
     sec
     jsr SCREEN_MODE 
@@ -2325,7 +2344,6 @@ PlusPress:
     jsr Repaintscreen
 jmp lp
 
-;CTRL -  -> previous supported screenmode
 MinusPress:
     sec
     jsr SCREEN_MODE 
@@ -2347,6 +2365,18 @@ MinusPress:
     jsr Repaintscreen
 jmp lp
 
+ShowKey:
+    clc
+    pha
+        ldx #59
+        ldy #1
+        jsr PLOT
+        
+        
+        jsr print_hex  
+ 
+    pla
+jmp lp
 
 GotoSwitchWindow:
     jsr LowlightRow
@@ -2355,11 +2385,12 @@ GotoSwitchWindow:
 jmp lp
 
 PageUp:
+
     jsr LowlightRow
     lda ROW_CURRENT
-    cmp #0  ;top
+    cmp #0  ;bovenaan
     beq GotoPrevPage
-
+    ;bovenaan plaatsen
     stz ROW_CURRENT
     jsr HighlightRow
     @DoNothing:
@@ -2367,7 +2398,7 @@ jmp lp
 
 GotoPrevPage:
     lda OFFSET_CURRENT
-    cmp #0  ;already at the top
+    cmp #0  ;reeds bovenaan
     beq AlreadyOnTop
     
     lda OFFSET_CURRENT
@@ -2417,7 +2448,7 @@ PageDown:
     adc ROW_CURRENT
     adc #2
     cmp FILECOUNT_CURRENT
-    bcs GotoEndOfList
+    bpl GotoEndOfList
       
     jsr HighlightRow
 
@@ -2479,13 +2510,15 @@ RowDown:
     @DoNothing:
 jmp lp
 
-
-;Replace params in string. For example: [f] will be replaced with the current selected filename
-;TODO: this subroutine can be highly optimized into smaller code. A lot of repetition
 ReplaceParams:
-    jsr LoadFileInfoCurrentFile
+    jmp ReplaceParams_start
     
-    jsr SetRambank63
+    TMPSTRING: .res 255
+    
+    
+ReplaceParams_start:
+    jsr LoadFileInfoCurrentFile
+   
     
     phx
     phy
@@ -2498,7 +2531,7 @@ ReplaceParams:
             beq @GotoReady
             cmp #$5b        ;[
             beq @AddParam
-            sta TMPSTRING2,x
+            sta TMPSTRING,x
             inx
             iny
         jmp @next
@@ -2541,6 +2574,11 @@ ReplaceParams:
             cmp #$32    ;2=other partition
             beq @Goto_InsertOtherPartition
                 
+
+            
+            ;t=time
+            ;d=date
+            ;z=size
                     
 
         jmp @next
@@ -2561,14 +2599,14 @@ ReplaceParams:
 
             phy
                 jsr LoadCurrentFileInBuffer
-                jsr SetRambank63
+            
                 ldy #0
                 @NextChar:
                     ;lda (ZP_PTR)
                     lda FileInfo_Name,y
                     cmp #0
                     beq @AddFileDone
-                    sta TMPSTRING2,x
+                    sta TMPSTRING,x
                     jsr IncBankPointer
                     inx 
                     iny
@@ -2587,7 +2625,7 @@ ReplaceParams:
                 ldy #0
                 :
                     lda FileInfo_Type,y
-                    sta TMPSTRING2,x
+                    sta TMPSTRING,x
                     inx 
                     iny
                     cpy #4
@@ -2608,7 +2646,7 @@ ReplaceParams:
                     lda FileInfo_Size,y
                     cmp #$20
                     beq @Skip
-                    sta TMPSTRING2,x
+                    sta TMPSTRING,x
                     inx 
                     @Skip:
                     iny
@@ -2624,13 +2662,11 @@ ReplaceParams:
         jmp @next
 
         @InsertDate:
-
-            
             phy
                 ldy #0
                 :
                     lda FileInfo_Date,y
-                    sta TMPSTRING2,x
+                    sta TMPSTRING,x
                     inx 
                     iny
                     cpy #10
@@ -2649,7 +2685,7 @@ ReplaceParams:
                 ldy #0
                 :
                     lda FileInfo_Time,y
-                    sta TMPSTRING2,x
+                    sta TMPSTRING,x
                     inx 
                     iny
                     cpy #5
@@ -2673,17 +2709,17 @@ ReplaceParams:
                     jsr SwitchWindow    ;overkill, but it works
                     plx
                     ply
-                        jsr SetRambank63
+                    
                         ldy #0
                         @nextpathcharcx:
                             lda DIR_CURRENT,y
                             cmp #0
                             beq @addpathreadycx
-                            sta TMPSTRING2,x
+                            sta TMPSTRING,x
                             sta TMP2
                             inx
                             iny
-                      
+                            
                         jmp @nextpathcharcx
                         @addpathreadycx:                   
                                       
@@ -2708,13 +2744,13 @@ ReplaceParams:
                     jsr SwitchWindow    ;overkill, but it works
                     plx
                     ply
-                        jsr SetRambank63
+                    
                         ldy #0
                         @nextpathcharcx2:
                             lda DIR_CURRENT,y
                             cmp #0
                             beq @addpathreadycx2
-                            sta TMPSTRING2,x
+                            sta TMPSTRING,x
                             sta TMP2
                             inx
                             iny
@@ -2744,7 +2780,7 @@ ReplaceParams:
                     lda PARTITION_CURRENT
                     clc
                     adc #$30
-                    sta TMPSTRING2,x
+                    sta TMPSTRING,x
                     inx
 
             ply
@@ -2760,7 +2796,7 @@ ReplaceParams:
                     lda PARTITION_OTHER
                     clc
                     adc #$30
-                    sta TMPSTRING2,x
+                    sta TMPSTRING,x
                     inx
 
             ply
@@ -2773,13 +2809,13 @@ ReplaceParams:
         
         @InsertLastInput:
             phy
-                    jsr SetRambank63
+                    
                     ldy #0
                     @nextpathchard:
                         lda InputBuffer,y
                         cmp #0
                         beq @addpathreadyc
-                        sta TMPSTRING2,x
+                        sta TMPSTRING,x
                         inx
                         iny
                         
@@ -2797,13 +2833,13 @@ ReplaceParams:
 
             
             phy
-                    jsr SetRambank63
+                    
                     ldy #0
                     @nextpathcharc:
                         lda DIR_CURRENT,y
                         cmp #0
                         beq @addpathreadyc
-                        sta TMPSTRING2,x
+                        sta TMPSTRING,x
                         sta TMP2
                         inx
                         iny
@@ -2822,13 +2858,13 @@ ReplaceParams:
 
             
             phy
-                    jsr SetRambank63
+                    
                     ldy #0
                     @nextpathchard2:
                         lda DIR_CURRENT,y
                         cmp #0
                         beq @addpathreadyd2
-                        sta TMPSTRING2,x
+                        sta TMPSTRING,x
                         sta TMP2
                         inx
                         iny
@@ -2849,7 +2885,7 @@ ReplaceParams:
                 
         @Ready:
         lda #0
-        sta TMPSTRING2,x ;end with $0
+        sta TMPSTRING,x ;end with $0
     
     
     
@@ -2858,7 +2894,7 @@ ReplaceParams:
         ;TEMPSTRING back into  MSG_MODAL
         ldy #0
         @nextcopy:
-            lda TMPSTRING2,y
+            lda TMPSTRING,y
             cmp #0
             beq @copyready
             sta (ZP_TEXT_PRT),y
@@ -2870,13 +2906,11 @@ ReplaceParams:
     
     ply   
     plx
-    jsr RestoreRambank
+    
     
 
 rts
 
-
-;Get filesize and convert block size to bytes size
 LoadCurrentFileSize:
 
     pha
@@ -2908,69 +2942,38 @@ LoadCurrentFileSize:
 
 rts
 
-;Change screenmode after user selects a supported one
 SelectSupportedScreenmode:
+jmp SelectSupportedScreenmode_start
+  SCREEN_MODE_MSG:  .byte $0d,"your current  screenmode is not supported. please choose one of these:",$0d,$0d,$0d
+                    .byte " a. mode 0: 80x60",$0d,$0d
+                    .byte " b. mode 1: 80x30",$0d,$0d
+                    .byte " c. mode 2: 40x60",$0d,$0d
+                    .byte " d. mode 3: 40x30",$0d,$0d
+                    .byte " e. mode 4: 40x15",$0d,$0d
+                    .byte " f. mode 8: 64x50",$0d,$0d
+                    .byte " g. mode 9: 64x25",$0d,$0d
+                    .byte $0
+                    
+              
+SelectSupportedScreenmode_start:
   PrintUntilZero SCREEN_MODE_MSG
   @lp:
         jsr GETIN
-        cmp #0
-        beq @lp
-        
-        jsr print_hex_debug
         cmp #$41    ;a
-        beq @ToMode0
-        cmp #$61    ;a
-        beq @ToMode0
-        cmp #$30    ;a
         beq @ToMode0
 
         cmp #$42    ;b
         beq @ToMode1
-        cmp #$62    ;b
-        beq @ToMode1
-        cmp #$31    ;b
-        beq @ToMode1
-
-
         cmp #$43    ;c
         beq @ToMode2
-        cmp #$63    ;c
-        beq @ToMode2
-        cmp #$32    ;c
-        beq @ToMode2
-
         cmp #$44    ;d
         beq @ToMode3
-        cmp #$64    ;d
-        beq @ToMode3
-        cmp #$33    ;d
-        beq @ToMode3
-
-
         cmp #$45    ;e
         beq @ToMode4
-        cmp #$65    ;e
-        beq @ToMode4
-        cmp #$34    ;e
-        beq @ToMode4
-
         cmp #$46    ;f
         beq @ToMode8
-        cmp #$66    ;f
-        beq @ToMode8
-        cmp #$38    ;f
-        beq @ToMode8
-
         cmp #$47    ;g
         beq @ToMode9
-        cmp #$67    ;g
-        beq @ToMode9
-        cmp #$39    ;f
-        beq @ToMode9
-        
-        cmp #$71    ;q
-        beq @ToQuit
-        
 
     
     jmp @lp
@@ -3012,16 +3015,43 @@ SelectSupportedScreenmode:
         jsr SCREEN_MODE
         jmp start    
 
-    @ToQuit:
-       jmp PerformQuit
 
+.macro CopyFileInfoIntoVar addrTo,xcnt
+    phy
+        ldy #0
+        :
+            lda (ZP_PTR)
+            sta addrTo,y
+            iny
+            jsr IncBankPointer
+            cpy #xcnt
+            bne :-
+    
+    ply
 
+.endmacro
 
+.macro CopyMem addrFrom,addrTo,xcnt
+    phy
+        ldy #0
+        :
+            lda addrFrom,y
+            sta addrTo,y
+            iny
+            cpy #xcnt
+            bne :-
+    
+    ply
 
-;Load info to display in fileinfo modal after pressing F2
+.endmacro
+
 LoadFileInfoCurrentFile:
 jmp LoadFileInfoCurrentFile_start
-  
+    FileInfo_Name: .res 255
+    FileInfo_Size: .byte "         "
+    FileInfo_Date: .res 10
+    FileInfo_Time: .res 5
+    FileInfo_Type: .res 4
     FileInfoDir: .byte "dir "
     FileInfoFile: .byte "file"
     FileInfoUnk: .byte "unkn"
@@ -3091,12 +3121,7 @@ LoadFileInfoCurrentFile_start:
 
 rts
 
-;Get current filename, read from long filename rambank if needed
 LoadCurrentFileInBuffer:
-    lda $00
-    pha
-    
-    
     phx
     phy
     pha
@@ -3111,7 +3136,7 @@ LoadCurrentFileInBuffer:
         stz TMP
         ldy #38
         lda (ZP_PTR),y  ;get first byte of pointer to long filename
-        sta TMP ;store in TMP also to check if there is a LFN pointer
+        sta TMP ;load in TMP also to check if there is a LFN pointer
         sta ZP_PTR2
 
     
@@ -3121,7 +3146,7 @@ LoadCurrentFileInBuffer:
         sta ZP_PTR2+1
 
         
-        ora TMP   ;OR both bytes together
+        ora TMP ;(ZP_PTR),y  ;OR both bytes together
         cmp #0
         bne @LoadLongFileName 
         jsr IncBankPointer  ;skip 2 bytes for file size
@@ -3133,7 +3158,7 @@ LoadCurrentFileInBuffer:
                 lda (ZP_PTR)
                 cmp #0
                 beq @AddFileDone
-                sta TMPSTRING,y
+                sta LFNBufferTmp,y
                 sta FileInfo_Name,y
                 jsr IncBankPointer
                 iny
@@ -3142,7 +3167,7 @@ LoadCurrentFileInBuffer:
             jmp @NextChar
             @AddFileDone:   
             lda #0
-            sta TMPSTRING,y
+            sta LFNBufferTmp,y
             sta FileInfo_Name,y
             jmp @SRDone
         
@@ -3155,28 +3180,22 @@ LoadCurrentFileInBuffer:
             lda (ZP_PTR2),y
             cmp #0
             beq @Done
-            sta TMPSTRING,y
+            sta LFNBufferTmp,y
             sta FileInfo_Name,y
             iny
             jmp @Next
         @Done:
       
-        sta TMPSTRING,y
+        sta LFNBufferTmp,y
         sta FileInfo_Name,y
     @SRDone:
     pla
     ply
     plx
-    
-    pla
-    sta $00
-
-   
 rts
 
 Gogo_LpXXXXXX: jmp lp
 
-;Show fileinfo modal
 FileInfo:
 jmp FileInfo_Start
     
@@ -3194,9 +3213,9 @@ FileInfo_Start:
     beq Gogo_LpXXXXXX
 
    
-    jsr SetRambank63
+  ;  jsr LoadCurrentFileInBuffer
     CopyAddrUntilZero FileInfo_Msg,MSG_MODAL,TMP
-    jsr RestoreRambank
+
     
     lda #<MSG_MODAL
     sta ZP_TEXT_PRT
@@ -3210,7 +3229,6 @@ FileInfo_Start:
    
 
 jmp lp
-
 
 ChangeToCurrentDirectory:
     jmp ChangeToCurrentDirectoty_start
@@ -3227,14 +3245,11 @@ ChangeToCurrentDirectory:
     stz CMD_BUFFER_LENGTH
     jsr DoDosCMD
 rts
-
 Goto_LPXXC: jmp lp
-
-
 RenameFile:
     jmp RenameFile_start
 
-    Msg_Rename: .asciiz "#Enter new name:#######<ENTER> to proceed   <ESC> to cancel"    
+    Msg_Rename: .asciiz "#enter new name:#######<enter> to proceed   <esc> to cancel"    
     CMD_RENAME: .asciiz "r:[i]=[f]"
     
 RenameFile_start:
@@ -3247,16 +3262,15 @@ RenameFile_start:
     cmp #$2e    ;.
     beq Goto_LPXXC ;don't delete .. (updir)
 
-    jsr SetRambank63
-    CopyAddrUntilZero Msg_Rename,MSG_MODAL
-    jsr RestoreRambank
-    
+
+   CopyAddrUntilZero Msg_Rename,MSG_MODAL
     ldx #28
     ldy #30
     clc
     jsr PLOT
     
-
+    lda #15
+    sta InputMaxLength
     
     jsr ShowGetInput
      
@@ -3273,8 +3287,11 @@ RenameFile_start:
         jmp @GotoLp
     
     @Jmp: 
-
+    ;CD to current directory
+   ; CopyAddrUntilZero CD_ROOT,CMD_BUFFER,CMD_BUFFER_LENGTH
+   ; jsr DoDosCMD
     jsr GotoCurrentDirectory
+   ; jsr WaitKey
     
     CopyAddrUntilZero CMD_RENAME,CMD_BUFFER
 
@@ -3290,31 +3307,54 @@ RenameFile_start:
     
     stz CMD_BUFFER_LENGTH
     jsr DoDosCMD
+   ; jsr WaitKey
     jsr ReloadWindows
     
-@GotoLp:jmp lp
+@GotoLp:
 
 
-;Ask the user to enter the name of the new directory, and create it
+jmp lp
+
+WaitKey:
+    pha
+    phx
+    phy
+        :
+          
+            jsr GETIN
+            cmp #0
+            beq :-
+
+    
+        lda #$07    ;beep
+        jsr CHROUT
+        :
+          
+            jsr GETIN
+            cmp #0
+            beq :-
+    ply
+    plx
+    pla
+rts
 CreateDirectory:
     jmp CreateDirectory_start
     
-    Msg_CreateDirectory: .asciiz "#Enter name for new directory:#######<ENTER> to proceed   <ESC> to cancel"    
+    Msg_CreateDirectory: .asciiz "#enter name for new directory:#######<enter> to proceed   <esc> to cancel"    
     CMD_MD: .asciiz "md:"
     
 CreateDirectory_start:
-    jsr SetRambank63
-    CopyAddrUntilZero Msg_CreateDirectory,MSG_MODAL
-    jsr RestoreRambank
     
+    CopyAddrUntilZero Msg_CreateDirectory,MSG_MODAL
     ldx #28
     ldy #30
     clc
     jsr PLOT
     
-
+    lda #15
+    sta InputMaxLength
     
-    jsr ShowGetInput    ;Show and handle getinput dialog
+    jsr ShowGetInput
      
     lda #2
     sta TMP ;#2
@@ -3326,7 +3366,7 @@ CreateDirectory_start:
     
     jsr GotoCurrentDirectory
     CopyAddrUntilZero CMD_MD,CMD_BUFFER
-    jsr SetRambank63
+
     ldx #0
     ldy #3
     @next:
@@ -3342,20 +3382,21 @@ CreateDirectory_start:
     lda #0
     sta CMD_BUFFER,y
     stz CMD_BUFFER_LENGTH
-    jsr RestoreRambank
+    
     
     
     jsr DoDosCMD
-
+  ;  PrintUntilZero CMD_BUFFER_RESULT
+  ;  jsr WaitKey
     
     jsr ReloadWindows
     
-@GotoLp: jmp lp
+@GotoLp:
 
+jmp lp
 
-;Show keyboard input dialog
 ShowGetInput:
-    ldy #DEFAULT_MODAL_WIDTH     ;width
+    ldy DEFAULT_MODAL_WIDTH     ;width
     ldx #15     ;height
     
     jsr ShowModal
@@ -3379,10 +3420,9 @@ ShowGetInput:
 rts
 Goto_LPXX: jmp lp
 
-;Delete selected file
 DeleteFile:
     jmp DeleteFile_start
-    Msg_DeleteFile: .asciiz "##Are you sure you want to delete:###[f]####<ENTER> to proceed   <ESC> to cancel"
+    Msg_DeleteFile: .asciiz "##are you sure you want to delete:###[f]####<enter> to proceed   <esc> to cancel"
 
     Template_Delete_File: .asciiz "s:[f]"
     Template_Delete_Dir: .asciiz "rd:[f]"
@@ -3396,9 +3436,9 @@ DeleteFile_start:
     beq Goto_LPXX ;don't delete .. (updir)
      
    
-    jsr SetRambank63
+    
     CopyAddrUntilZero Msg_DeleteFile,MSG_MODAL
-    jsr RestoreRambank
+
   
     
     
@@ -3420,6 +3460,7 @@ DeleteFile_start:
      jsr LowlightRow
   
   jsr GotoCurrentDirectory
+   ; jsr ChangeToCurrentDirectory
     
     jsr SetPointerToCurrentOffset   ;memory pointer to current offset  
     jsr AdvancePointerToCurrentRow
@@ -3448,18 +3489,17 @@ DeleteFile_start:
 GotoEnd:   
 jmp lp
 
-;Reload fileslist of current window
 ReloadCurrentWindow:
     stz OFFSET_CURRENT
     stz ROW_CURRENT
+   ; stz PAGE_CURRENT
     
     jsr LowlightRow
-    jsr LoadCurrentDir2
+    jsr LoadCurrentDir
     jsr ShowFiles2
 
 rts
 
-;After user selects a new partition/device,it is saved and the windowis reloaded
 ChangePartition:
    
     jsr SetPointerToCurrentOffset   ;memory pointer to current offset  
@@ -3471,12 +3511,12 @@ ChangePartition:
     lda (ZP_PTR)
     sta PARTITION_CURRENT
     stz MODE_CURRENT    ;back to normal operation mode
-    jsr SetRambank63
+
     lda #$2F
     sta DIR_CURRENT
     lda #0
     sta DIR_CURRENT+1    
-    jsr RestoreRambank
+    
     jsr LowlightRow
     jsr ReloadCurrentWindow
     jsr HighlightRow
@@ -3484,7 +3524,6 @@ ChangePartition:
     
 jmp lp
 
-;Reload both windows
 ReloadWindows:
     ;Make sure current selected row IS a file or DIR
     jsr LowlightRow
@@ -3504,7 +3543,7 @@ ReloadWindows:
     @DoReload:
 
     jsr LowlightRow
-    jsr LoadCurrentDir2
+    jsr LoadCurrentDir
     jsr ShowFiles2
     jsr SwitchWindow
     
@@ -3524,45 +3563,40 @@ ReloadWindows:
 
     @DoReloadB:   
     
-    jsr LoadCurrentDir2
+    jsr LoadCurrentDir
     jsr ShowFiles2
     jsr SwitchWindow
     jsr HighlightRow   
 rts
 
-;Show file copy dialog
 CopyCurrentFile:
-jmp CopyCurrentFile_start
+    jmp CopyCurrentFile_start
     
-    Msg_CopyFile: .asciiz "##You are about to copy##File:   [f] ##To dir: [p]####<ENTER> to proceed   <ESC> to cancel"  ;# is linefeed 
-    Msg_Copying: .asciiz "####Copying, please wait..."
-    Msg_FileExists: .asciiz "        File already exists!        #        proceed to overwrite        "
+    Msg_CopyFile: .asciiz "##you are about to copy##file:   [f] ##to dir: [p]####<enter> to proceed   <esc> to cancel"  ;# is linefeed 
+    Msg_Copying: .asciiz "####copying, please wait..."
+    Msg_FileExists: .asciiz "        file already exists!        #        proceed to overwrite        "
     TemplateCopySource: .asciiz "[s]/[f]"   ;c=current directory
     
     TemplateCopyDest: .asciiz "@:[r]/[f],s,w"   ;p=directory of other window
 
-GotoLP2: jmp lp
-    
+GotoLP2:
+    jmp lp
 CopyCurrentFile_start:
     ldx FILECOUNT_CURRENT
     cpx #0
     beq GotoLP2
 
-  
+    ;check if is not dir
+    ;;-------------------------------------    
     jsr SetPointerToCurrentOffset   ;memory pointer to current offset  
     jsr AdvancePointerToCurrentRow
    
-    ;check if is not dir
-
     ldy #37
     lda (ZP_PTR),y
-    cmp #$44    ;directory, do nothing. Directory copying is not yet supported 
+    cmp #$44    ;directory    
     beq GotoLP2
     
-    jsr SetRambank63
     CopyAddrUntilZero Msg_CopyFile,MSG_MODAL
-    jsr RestoreRambank
-    
     lda #<MSG_MODAL
     sta ZP_TEXT_PRT
     lda #>MSG_MODAL
@@ -3570,7 +3604,7 @@ CopyCurrentFile_start:
     
    jsr ReplaceParams   ;replace message params with values
  
-   ;Check if file exists to add warning
+   ;Check if file exists
         ;change cur dir to other directory
         jsr SwitchToOtherDevice
             CopyAddrUntilZero DOS_CURDIROTHER,CMD_BUFFER,CMD_BUFFER_LENGTH
@@ -3582,7 +3616,8 @@ CopyCurrentFile_start:
             stz CMD_BUFFER_LENGTH
             inc DOS_CMD_DEVICE  ;use other device
             jsr DoDosCMD
-        
+          ;  PrintUntilZero CMD_BUFFER_RESULT
+           ; jsr WaitKey
 
             CopyAddrUntilZero DOS_FILEEXISTS,CMD_BUFFER
             lda #<CMD_BUFFER
@@ -3601,46 +3636,46 @@ CopyCurrentFile_start:
     beq DoCopy
     ;else add warning
   
-    jsr SetRambank63
-        CountUntilZero MSG_MODAL,CNT
-        
-        ldy CNT
-        ;add warning
-        ;add 2 line feeds
-        lda #$23
+
+    CountUntilZero MSG_MODAL,CNT
+    ldy CNT
+   ; iny
+    ;add warning
+    ;add 2 line feeds
+    lda #$23
+    sta MSG_MODAL,y
+    iny
+    sta MSG_MODAL,y
+    iny
+    
+    lda #$1C
+    sta MSG_MODAL,y
+    iny
+    lda #$01
+    sta MSG_MODAL,y
+    iny
+    lda #$05
+    sta MSG_MODAL,y
+    iny
+    ;copy warning in confirm message
+    ldx #0
+    @msgnxt:
+        lda Msg_FileExists,x
+        cmp #0
+        beq @CopyDone
         sta MSG_MODAL,y
         iny
-        sta MSG_MODAL,y
-        iny
-        
-        lda #$1C
-        sta MSG_MODAL,y
-        iny
-        lda #$01
-        sta MSG_MODAL,y
-        iny
-        lda #$05
-        sta MSG_MODAL,y
-        iny
-        ;copy warning in confirm message
-        ldx #0
-        @msgnxt:
-            lda Msg_FileExists,x
-            cmp #0
-            beq @CopyDone
-            sta MSG_MODAL,y
-            iny
-            inx
-            jmp @msgnxt
-        
-        @CopyDone:
+        inx
+        jmp @msgnxt
+    
+    @CopyDone:
 
 
-            lda #0
-            sta MSG_MODAL,y    
-        
-        DoCopy:
-    jsr RestoreRambank
+        lda #0
+        sta MSG_MODAL,y    
+    
+    DoCopy:
+   
  
     
 
@@ -3654,13 +3689,9 @@ CopyCurrentFile_start:
 @GotoLp:
 jmp lp
 
-;Prepare params befor copy
 PrepareCopyParams:
-    jsr SetRambank63
     CopyAddrUntilZero Msg_Copying,MSG_MODAL
-    jsr RestoreRambank
-    
-    ldy #DEFAULT_MODAL_WIDTH     ;width
+    ldy DEFAULT_MODAL_WIDTH     ;width
     ldx #15     ;height
     jsr ShowModal
     
@@ -3671,11 +3702,10 @@ PrepareCopyParams:
     lda #>MSG_MODAL
     sta ZP_TEXT_PRT+1
 
-    jsr SetRambank63
+
     CopyAddrUntilZero TemplateCopySource,SourceFile
     CopyAddrUntilZero TemplateCopyDest,DestFile
-    jsr RestoreRambank
-    
+
    
     lda #<SourceFile
     sta ZP_TEXT_PRT
@@ -3690,15 +3720,17 @@ PrepareCopyParams:
     sta ZP_TEXT_PRT+1
     jsr ReplaceParams   ;replace message params with values
  
-
+  ;  PrintUntilZero SourceFile
+   ; jsr print_lf
+  ;  PrintUntilZero DestFile
+  ;  jsr WaitKey
  
   
     jsr CopyAFile
 
-    ldy #DEFAULT_MODAL_WIDTH     ;width
+    ldy DEFAULT_MODAL_WIDTH     ;width
     ldx #15     ;height
 
-    jsr SetRambank62
     lda #<MODAL_SCREEN_BACKUP
     sta ZP_PTR
     lda #>MODAL_SCREEN_BACKUP
@@ -3712,48 +3744,34 @@ PrepareCopyParams:
      
 jmp lp
 
-;User want to quit UFM
 Quit:
     jmp Quit_Start
     
-    Msg_Quit: .asciiz "##Are you sure you want to quit##and return to basic?####<ENTER> to proceed   <ESC> to cancel"
+    Msg_Quit: .asciiz "##are you sure you want to quit##and return to basic?####<enter> to proceed   <esc> to cancel"
     
     Quit_Start:
-    jsr SetRambank63
     CopyAddrUntilZero Msg_Quit,MSG_MODAL
-    jsr RestoreRambank
     
     jsr ShowConfirm
     
     lda RESULT_KEY
     cmp #$0D     ;ENTER pressed
-    bne GotoLpXX
-
-PerformQuit:    
-    jsr clearscreen
-
-    ;reset charsetand stuf
-    lda #2
-    jsr screen_set_charset 
-
-    lda #$8F
-    jsr CHROUT
+    bne @GotoLp
     
-    lda #$8E
-    jsr CHROUT
+    jsr clearscreen
     
     
     rts;return to basic
     
-;one to many!!
-GotoLpXX: jmp lp
-Goto_LPXXCXX: jmp lp
+@GotoLp:
+jmp lp
 
-;Handle dialog and execution of moving a file
+
+Goto_LPXXCXX: jmp lp
 MoveCurrentFile:
     jmp MoveCurrentFile_start
     
-    Msg_MoveFile: .asciiz "##You are about to move##File:   [f] ##To dir: [p]####<ENTER> to proceed   <ESC> to cancel"  ;# is linefeed 
+    Msg_MoveFile: .asciiz "##you are about to move##file:   [f] ##to dir: [p]####<enter> to proceed   <esc> to cancel"  ;# is linefeed 
     
  
     CMD_MOVE: .asciiz "r:[r]/[f]=[s]/[f]"
@@ -3774,10 +3792,8 @@ MoveCurrentFile_start:
     cmp #$44    ;directory    
     beq @GotoLp ;DIRECTORY CANT BE MOVED
     
-    jsr SetRambank63
     CopyAddrUntilZero Msg_MoveFile,MSG_MODAL
-    jsr RestoreRambank
-    
+      
     lda #<MSG_MODAL
     sta ZP_TEXT_PRT
     lda #>MSG_MODAL
@@ -3798,8 +3814,8 @@ MoveCurrentFile_start:
     cmp #$0D     ;ENTER pressed
     beq PerformMove
     
-@GotoLp: jmp lp
-
+@GotoLp:
+jmp lp
 
 PerformMove:
     ;change cur dir to root
@@ -3822,74 +3838,75 @@ PerformMove:
      
 jmp lp
 
-;Show message in a already prepared dialog
 ShowModalMsg:
-    jsr SetRambank63
-        ldx #$1F
-        ldy #$05
-        jsr SetColor
-        
-        ldx MODAL_ROW
-        ldy MODAL_COL
+    ldx #$1F
+    ldy #$05
+    jsr SetColor
     
-        lda MODAL_COL
+    ldx MODAL_ROW
+    ldy MODAL_COL
+   
+    lda MODAL_COL
+ 
+  
     
+    inx
+    iny
+    iny
     
+    stx VERA_PLOT_X
+    sty VERA_PLOT_Y
         
-        inx
-        iny
-        iny
-        
-        stx VERA_PLOT_X
-        sty VERA_PLOT_Y
+    clc
+    ;jsr PLOTVera
+    jsr PLOT
+    
+    phx
+    ldx #0
+        @next:
+            lda MSG_MODAL,x
+            cmp #0
+            beq @ready
+            cmp #$23   ;# --> goto next line
+            beq @LineFeed
             
-        clc
-        ;jsr PLOTVera
-        jsr PLOT
-        
-        phx
-        ldx #0
-            @next:
-                lda MSG_MODAL,x
-                cmp #0
-                beq @ready
-                cmp #$23   ;# --> goto next line
-                beq @LineFeed
+           ; jsr PrintAToVera
+            jsr CHROUT
+            inx
+            jmp @next
+            
+            @LineFeed:
                 
-        
-                jsr CHROUT
-                inx
-                jmp @next
-                
-                @LineFeed:
+                phx
+                phy 
                     
-                    phx
-                    phy 
-                        
-                        ldx VERA_PLOT_X ;current row
-                        inx             ;next line
-                        ldy VERA_PLOT_Y ;last Y (start of line)
-                        ;jsr PLOTVera
-                        clc
-                        jsr PLOT
-                        stx VERA_PLOT_X ;store new current row
+                    ldx VERA_PLOT_X ;current row
+                    inx             ;next line
+                    ldy VERA_PLOT_Y ;last Y (start of line)
+                    ;jsr PLOTVera
+                    clc
+                    jsr PLOT
+                    stx VERA_PLOT_X ;store new current row
 
-                    ply
-                    plx
-                inx
-                jmp @next
-                
-            @ready:
-        plx
-        jsr ResetColor
-    jsr RestoreRambank
+                ply
+                plx
+               inx
+            jmp @next
+            
+        @ready:
+    plx
+    jsr ResetColor
 rts
 
-;Show confirmation dialog
 ShowConfirm:
+    jmp ShowConfirm_start
+    
+    RESULT_KEY: .byte $0
+    
+ShowConfirm_start:
     ;max width=50
     ;max height=20
-    ldy #DEFAULT_MODAL_WIDTH     ;width
+    ldy DEFAULT_MODAL_WIDTH     ;width
     ldx #17     ;height
     jsr ShowModal
     
@@ -3933,9 +3950,12 @@ ShowConfirm:
     jsr LoopThroughModelWindow  ;Restore screen
 rts
 
-;Show modal dialog
 ShowModal:
-    ;Row
+jmp ShowModal_start
+    MSG_MODAL: .res 255
+
+ShowModal_start:
+    ;Rij
     sty MODAL_WIDTH
     stx MODAL_HEIGHT
     
@@ -3944,12 +3964,12 @@ ShowModal:
     lda SCREEN_ROWS
     clc
     sbc MODAL_HEIGHT
-    lsr ;devide by 2
+    lsr ;devide bt 2
     sta MODAL_ROW
 
    
     
-    ;Column
+    ;Kolom
     
     lda SCREEN_COLS
     sec
@@ -3964,16 +3984,19 @@ ShowModal:
 
     sta MODAL_COL
 
+    
+    
+
+
+
+
     stz TMP ;0=read bytes and store
-    
-    jsr SetRambank62
-    
-    ;Copy bytes where the modal is going to be printed into rambank, to restore when modal is no longer needed
+   
     lda #<MODAL_SCREEN_BACKUP
     sta ZP_PTR
     lda #>MODAL_SCREEN_BACKUP
     sta ZP_PTR+1
-    jsr LoopThroughModelWindow 
+    jsr LoopThroughModelWindow  ;Read from vram
     
     inc TMP
     jsr LoopThroughModelWindow  ;ShowModal
@@ -3988,7 +4011,6 @@ ShowModal:
 
 rts
 
-;Multipurpose subroutine to handle model showing/hiding logic
 LoopThroughModelWindow:
     stz MODAL_ROW_COUNT
     stz MODAL_COL_COUNT
@@ -4060,7 +4082,7 @@ LoopThroughModelWindow:
 
 rts
 
-;if at the and of the screenlist, increment offset
+
 EndOfScreenlist:
 
     clc
@@ -4077,16 +4099,18 @@ EndOfScreenlist:
     jsr HighlightRow
 jmp lp
 
-;If after pressing arrow down there are no more files, stop at the last line
 EndOfFilesList:
     dec ROW_CURRENT
     jsr HighlightRow   
 
 jmp lp
 
-
-;handle arrow up press
 RowUp:
+    
+   jmp DoRowUp   
+jmp lp
+
+DoRowUp:
 
     lda ROW_CURRENT
     cmp #$0
@@ -4099,8 +4123,12 @@ RowUp:
 
 jmp lp
 
-;Handle if highlighted row is already at the top of the screen
 TopOfScreenlist:
+  jmp DoTopOfScreenlist
+
+jmp lp
+
+DoTopOfScreenlist:
     lda OFFSET_CURRENT
     cmp #$0
     beq Goto_lp  ;bovenaan de lijst, dus niets doen
@@ -4112,10 +4140,10 @@ TopOfScreenlist:
 
  jmp lp
 
-Goto_lp: jmp lp
-    
-;Change color byte in vera ram of current selected row to highlight it
-HighlightRow: 
+Goto_lp:
+    jmp lp
+
+HighlightRow:   ;manipulate the color byte of each charactewr
     
 
     clc
@@ -4131,8 +4159,7 @@ HighlightRow:
 
 rts
 
-;Change color byte in vera ram of current selected row to de-highlight it
-LowlightRow:  
+LowlightRow:    ;manipulate the color byte of each charactewr
     clc
     jsr SetVeraAddress
     ldx #0
@@ -4146,14 +4173,36 @@ LowlightRow:
 
 rts
 
-;Set vera addres to textmode and to the current selected row to change color
+PrintDebugInfo:
+    phy
+    phx
+    pha
+    
+    ldx #50
+    ldy #50
+    clc
+    jsr PLOT
+    lda #$31
+ ;   jsr CHROUT
+    lda #COLON
+  ;  jsr CHROUT
+    pla
+   ; lda FILECOUNT_CURRENT
+    jsr print_hex
+   
+    plx
+    ply
+
+rts
+
 SetVeraAddress:
     pha
     phx
         lda ROW_CURRENT
         adc #7  ;offset for line start
       
-
+      
+        
         tax
         
         
@@ -4200,6 +4249,9 @@ SetVeraAddress:
             jsr Adder24bit        
         @NoOffset:
         
+        
+        
+
 
         LDA Adder24bitValue                ;$N1B000
         STA $9F20   ;ADDRES_L
@@ -4214,8 +4266,18 @@ SetVeraAddress:
     pla
 rts
 
+IncBankPointer:
+    pha
+        clc
+        lda ZP_PTR    ;load low byte
+        adc #1
+        sta ZP_PTR
+        bcc @Done
+        inc ZP_PTR+1
+        @Done:
+    pla
+rts
 
-;Increment a 2 byte pointer which points to rambank
 IncBankPointer2:
     pha
         clc
@@ -4228,9 +4290,21 @@ IncBankPointer2:
     pla
 rts
 
+DecBankPointer: 
+    pha
+        clc
+        lda ZP_PTR    ;load low byte
+        SEC               
+        sbc #1
+        sta ZP_PTR
 
+        lda ZP_PTR+1
+        sbc #0
+        sta ZP_PTR+1
+        @Done:
+    pla
+rts
 
-;Decrement a 2 byte pointer which points to rambank
 DecBankPointer2: 
     pha
         clc
@@ -4247,13 +4321,12 @@ DecBankPointer2:
 rts
 
 
-;Store accumulator in rambank
+
 StoreCurrentAInMemory:
     sta (ZP_PTR)
     jsr IncBankPointer 
 rts
 
-;TODO: same as IncBankPointer2, absolete!
 IncLFNPointer:
     pha
         clc
@@ -4266,7 +4339,6 @@ IncLFNPointer:
     pla
 rts
 
-;Set rambank to files list of left or right window
 SetRamBank:
     pha
     lda MODE_CURRENT
@@ -4288,8 +4360,23 @@ SetRamBank:
         @Continue:
     pla 
 rts
+   ;------------------------SET RAMBANK FOR CORRECT WINDOW ------------------------------
+    pha
+        lda iCurrentWindow
+        cmp #0
+        beq @WindowLeft
+        
+            lda #02        ;set rambank to 02: :window right
+            sta ZP_RAMBANK   
+            bra @Window_Done
+        @WindowLeft:
+            lda #03        ;set rambank to 03   ;window left
+            sta ZP_RAMBANK   
+        @Window_Done:
+    pla
+    ;------------------------SET RAMBANK FOR CORRECT WINDOW ------------------------------
+rts
 
-;Set rambank to rambank for long filenames of left or right window
 SetRambankLongFileNames:
     pha
         clc
@@ -4301,7 +4388,6 @@ SetRambankLongFileNames:
 
 rts
 
-;Set rambank pointer to the record of the top most file in the current window
 SetPointerToCurrentOffset:
     lda OFFSET_CURRENT      ;offset
     adc ROW_CURRENT         ;+current row = for pointer
@@ -4326,7 +4412,7 @@ SetPointerToCurrentOffset:
     sta Adder24bitValue+2
 
     ;set value to add       $0100   = 256
-    lda #SET_RECORD_LENGTH ; #$20   ;32 = 32 bytes per file
+    lda SET_RECORD_LENGTH ; #$20   ;32 = 32 bytes per file
     sta Adder24bitToAdd    
     lda #$00
     sta Adder24bitToAdd+1    
@@ -4353,7 +4439,6 @@ SetPointerToCurrentOffset:
 
 rts
 
-;Advance pointer of rambank to record of the current highlighted file
 AdvancePointerToCurrentRow:
  ;check if necessary
     phx
@@ -4383,9 +4468,9 @@ rts
 
 Goto_PrintEmptyLines:   jmp PrintEmptyLines
     
-;Show files list of left ot right window
-ShowFiles2:
 
+ShowFiles2:
+    ;Set correct rambank
     clc
     jsr SetRamBank
     
@@ -4396,12 +4481,12 @@ ShowFiles2:
 
     jsr PrintCurrentFolder
     jsr PrintCurrentDevice
-    jsr SetRamBank
+    
     
     clc
     ldx #7
     ldy COL_OFFSET
-    jsr PLOTVera        ;writing filelist is done by writing to VRAM directly. Much faster then CHROUT
+    jsr PLOTVera 
     
     lda FILECOUNT_CURRENT
     cmp #0
@@ -4503,7 +4588,7 @@ ShowFiles2:
         
         PrintEmptyLines:
         sta ListCounter
-        ;print empty lines to fill the window
+        ;print empty lines
         jsr FilesReadyPrintBlanks
         
         Continue:
@@ -4512,7 +4597,6 @@ rts
 
 Goto_Nextline2: jmp Nextline2
 
-;Print the current device and partition
 PrintCurrentDevice:
     ldx #3
     
@@ -4520,11 +4604,13 @@ PrintCurrentDevice:
     
     ldy COL_OFFSET
 
+   ; iny
+
     clc
     jsr PLOT
     
     lda #$5b
-    jsr CHROUTbin
+    jsr CHROUT
 
    
     
@@ -4558,7 +4644,7 @@ PrintCurrentDevice:
                 
                 jsr IncBankPointer
                 iny
-                cpy #SET_RECORD_LENGTH
+                cpy SET_RECORD_LENGTH
                 bne @lp3                
             
         jmp @lp
@@ -4583,10 +4669,9 @@ PrintCurrentDevice:
     sta ZP_RAMBANK
     
     lda #$5d
-    jsr CHROUTbin
+    jsr CHROUT
     
-    ;Whipe out any longer partition names
-    lda #$A1
+    lda #$63
     jsr CHROUT
     jsr CHROUT
     jsr CHROUT
@@ -4597,14 +4682,13 @@ PrintCurrentDevice:
     
 rts
 
-;Print current folder and shrink it if it is too long
 PrintCurrentFolder:
     
         ldy COL_OFFSET
         ldx #4
         clc
         jsr PLOT
-        jsr SetRambank63
+        
         
         CountUntilZero DIR_CURRENT,CNT
         lda CNT
@@ -4614,7 +4698,7 @@ PrintCurrentFolder:
         phy
         phx
             ;doesn't fit, so print portion
-            lda WINDOW_WIDTH 
+            lda WINDOW_WIDTH ;devide by two
             sec
             sbc #4      ;using 4 dots to seperate
             clc
@@ -4625,7 +4709,7 @@ PrintCurrentFolder:
             ldx #0
             :
                 lda DIR_CURRENT,x
-                jsr CHROUTbin
+                jsr CHROUT
                 inx
                 cpx CNT
                 bne :-
@@ -4647,7 +4731,7 @@ PrintCurrentFolder:
                 ;print chars
                 :
                     lda DIR_CURRENT,y
-                    jsr CHROUTbin       
+                    jsr CHROUT       
                     iny
                     cpy TMP2
                     bne :- 
@@ -4664,7 +4748,7 @@ PrintCurrentFolder:
                 lda DIR_CURRENT,y
                 cmp #$0
                 beq @PrintPathDone
-                jsr CHROUTbin
+                jsr CHROUT
             iny
             cpy #38
             bne NextChar
@@ -4679,12 +4763,14 @@ PrintCurrentFolder:
             @PrintPathSpacesDone:    
         ply 
         PrintDone:
-        jsr RestoreRambank
 rts
 
 
     
 FilesReady:    
+
+ 
+
 rts
 
 FilesReadyPrintBlanks:
@@ -4702,7 +4788,7 @@ FilesReadyPrintBlanks:
                 bne :-
         
         plx
-
+       ; PrintACharVera 38
         
         inx
         inc ListCounter
@@ -4712,14 +4798,14 @@ FilesReadyPrintBlanks:
     jmp @NextLine
 rts
 
-
-;Get the current (startup) partition
 GetCurrentPartition:
 jmp GetCurrentPartition_start
     CMD_PARTITION_INFO: .byte "g-p",0
     
 GetCurrentPartition_start:
-
+    ;lda #8
+   ; sta DEVICE_CURRENT
+   ; sta $03fe
     CopyAddrUntilZero CMD_PARTITION_INFO,CMD_BUFFER
     stz CMD_BUFFER_LENGTH
     CountUntilZero CMD_BUFFER_RESULT,CNT
@@ -4739,7 +4825,6 @@ GetCurrentPartition_start:
     
 rts
 
-;Change to director of current window
 GotoCurrentDirectory:
 
     ;goto current device
@@ -4756,7 +4841,7 @@ GotoCurrentDirectory:
 
 
     
-    ;First goto root
+    ;;;goto root
         stz CMD_BUFFER_LENGTH
     
         lda #$43   ;C
@@ -4773,38 +4858,30 @@ GotoCurrentDirectory:
 
     ldx #0
 
-    
-    jsr SetRambank63
-    lda #10
-    sta DEBUG
     @NextChar:
-
         lda DIR_CURRENT,x
-
+       ; lda TMPDIR,x
       
         cmp #$0
-        beq @DoneXX   ;na $0 ook klaar... 
-
+        beq @Done   ;na $0 ook klaar... 
+        ;jsr CHROUT
         sta CMD_BUFFER+3,x
         inx
         inc CMD_BUFFER_LENGTH
 
     jmp @NextChar
         
-@DoneXX:
+    ;@DoCMD:
+   ;     jsr DoDosCMD ;do change directory
+   ; jmp @NextDir ;goto next directory
 
-    jsr RestoreRambank
-      
-    
-      
+@Done:
     jsr DoDosCMD
 rts
 
-;Execure dos command in CMD_BUFFER
 DoDosCMD:
 
-    
-    lda DOS_CMD_DEVICE  ;0=Current, 1=Other --> depending on the action the dos command needs to be performed on the left or right window
+    lda DOS_CMD_DEVICE  ;0=Current, 1=Other
     cmp #0
     beq @UseCurrent
         ;use other
@@ -4825,6 +4902,10 @@ DoDosCMD:
          sta DOS_CMD_DEVICE       
     @Continue:
     
+;    lda DOS_CMD_DEVICE
+;    jsr print_hex
+;    jsr WaitKey
+    
     lda CMD_BUFFER_LENGTH
     cmp #0
     bne @Door
@@ -4840,18 +4921,29 @@ DoDosCMD:
     jmp @next
    
     @Door:
-
-
+ ;   lda CMD_BUFFER_LENGTH
+ ;   jsr print_hex
+ ;   jsr WaitKey
+ ;    clc
+  ;  ldx #58
+ ;   ldy #0
+ ;   jsr PLOT
     
     ldx #0
     :
        lda CMD_BUFFER,x
+   ;    jsr CHROUT
        inx
        cpx CMD_BUFFER_LENGTH
        bne :-
-
     
-
+  ;  lda #$20
+ ;  jsr CHROUT
+  ;  lda CMD_BUFFER_LENGTH
+  ;  jsr print_hex
+  ;  lda #$20
+  ;  jsr CHROUT   
+    
     
    lda #1   ; Logical Number = 1
    ldx DOS_CMD_DEVICE ;DEVICE_CURRENT ;#8   
@@ -4868,29 +4960,35 @@ DoDosCMD:
 
    
    jsr OPEN
-
+; jmp Klaarxx  
+    ldx #58
+    ldy #0
+  ;  jsr PLOT
     
      LDX #1
      jsr CHKIN  
 
-     ldy #$00      
+     ldy #$00      ;PREPARE THE Y REGISTER TO STORE THE DATA
 @RD:
     lda #1
     jsr READST
     bne @Continue2
     JSR CHRIN
-    STA CMD_BUFFER_RESULT,Y    
-
-                  
+    STA CMD_BUFFER_RESULT,Y    ;STORE THE YTH DATA BYTE IN THE YTH
+    ;jsr CHROUT
+                   ;LOCATION IN THE DATA AREA.
      INY
-
+   ;  CMP #LF       ;IS IT A CARRIAGE RETURN?
+  ;   BNE @RD        ;NO, GET ANOTHER DATA BYTE
      jmp @RD
   @Continue2:
-
-       
+    
     lda #0
     STA CMD_BUFFER_RESULT,Y
    
+   Klaarxx:
+   
+
    jsr CLRCHN
    lda #1
    jsr CLOSE
@@ -4903,7 +5001,6 @@ DoDosCMD:
 
 rts
 
-;Change to the partition of the current window
 SelectCurrentPartition:
     stz CMD_BUFFER_LENGTH
 
@@ -4924,7 +5021,6 @@ SelectCurrentPartition:
     jsr DoDosCMD
 rts
 
-;Change to partition of the other window
 SelectOtherPartition:
     stz CMD_BUFFER_LENGTH
 
@@ -4945,21 +5041,32 @@ SelectOtherPartition:
     jsr DoDosCMD
 rts
 
-;Read files list of current window
 LoadCurrentDir2:
-jmp LoadCurrentDir2_start
+    jmp LoadCurrentDir2_start
     
+    TMP_FILESIZE:       .byte 0,0
+    TMP_FILESIZE_DESIGNATOR: .byte 0,0
+    TMP_LFN_POINTER:    .byte 0,0
+    FILE_NAME_LENGTH:   .byte 0
+    LONG_FILE_NAME:     .res 255
+    LONG_FILE_NAME_PTR: .res 2
+    PAGE_FILE_COUNT:    .byte 0
+    PAGE_CURRENT_USE:   .byte 0
+    LAST_START_POINTER: .res 2,0
     MSG_LOAD_MORE: .byte  "-next page-",0
     MSG_LOAD_LESS: .byte  0,0,"-prev page-                                                     ",0 ;"
-    UPDIR: .byte 0,0,"..                                 d",0,0   ;"    
-LoadCurrentDir2_start:
+    
+    LoadCurrentDir2_start:
     
    
     
     lda PAGE_CURRENT
     sta PAGE_CURRENT_USE    ;pages to skip
     
-   
+  ;  inc PAGE_CURRENT_USE ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;  inc PAGE_CURRENT_USE ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;  inc PAGE_CURRENT_USE ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    
     stz PAGE_FILE_COUNT ;if PAGE_CURRENT_USE>0 then PAGE_FILE_COUNT counts until full page to skip
     
     jsr SetRamBank
@@ -4995,10 +5102,10 @@ LoadCurrentDir2_start:
             lda UPDIR,y
             jsr StoreCurrentAInMemory
             iny
-            cpy #SET_RECORD_LENGTH
+            cpy SET_RECORD_LENGTH
             bne :-     
             inc TMP2   
-
+        ;inc FILECOUNT_CURRENT  ;added after load so file count is correct
     
     @Goto_NoSubdir:
     
@@ -5010,7 +5117,7 @@ LoadCurrentDir2_start:
             lda MSG_LOAD_LESS,y
             jsr StoreCurrentAInMemory
             iny
-            cpy #SET_RECORD_LENGTH
+            cpy SET_RECORD_LENGTH
             bne :-     
             inc TMP2
             jsr DecBankPointer
@@ -5028,15 +5135,22 @@ LoadCurrentDir2_start:
     lda ZP_PTR+1
     sta LAST_START_POINTER+1
     
-
+  ;  stz LAST_START_POINTER
+  ;  stz LAST_START_POINTER+1
     
     
     stz DOS_DIR_TYPE    ;0=directories
     jsr LoadFilesList2
  
-    lda PAGE_CURRENT_USE  ;absolete???
-    
-    inc DOS_DIR_TYPE    ;1=files
+    lda PAGE_CURRENT_USE
+   ; jsr print_hex
+  ;  lda #COLON
+  ;  jsr CHROUT
+ ;   lda FILECOUNT_CURRENT
+ ;   jsr print_hex
+ ;   jsr WaitKey
+      
+    inc DOS_DIR_TYPE
     jsr LoadFilesList2
        
     ;if there is a updir add to count
@@ -5049,6 +5163,168 @@ LoadCurrentDir2_start:
     
 rts
 
+Goto_NoSubdir: jmp NoSubdir
+LoadCurrentDir:     ;first attempt without caching
+jmp LoadCurrentDir2
+
+    jmp LoadCurrentDir_start
+ 
+
+        AR_INDEX: .byte $0,$0      ;2 byte index of array
+        ReadStatus: .byte $0
+        LenByte: .byte $0
+        UPDIR: .byte 0,0,"..                                 d",0,0   ;"
+    
+        
+    LoadCurrentDir_start:
+    
+    jsr SetRamBank
+    
+    stz ReadStatus
+    stz LenByte
+    stz AR_INDEX
+    stz AR_INDEX+1
+    
+    jsr GotoCurrentDirectory
+ 
+    ;;--- Store rambank address in start pointer
+    lda #<RAMBANK
+    sta ZP_PTR
+    sta ZP_PTR2
+    lda #>RAMBANK
+    sta ZP_PTR+1
+    sta ZP_PTR2+1
+ 
+
+    
+  
+    ;;-------------------------------------
+
+    stz FILECOUNT_CURRENT    
+ 
+   
+ 
+    ;check if is root
+    lda CMD_BUFFER_LENGTH
+    cmp #$04    ;cd:/  -> root
+    beq Goto_NoSubdir
+    
+    ;add row to cd..
+    ldy #0
+    :
+        lda UPDIR,y
+        jsr StoreCurrentAInMemory
+        iny
+        cpy #32
+        bne :-
+    jmp SkipLines
+                
+                ;2 bytes for fake size
+                lda #0
+                jsr StoreCurrentAInMemory
+                jsr StoreCurrentAInMemory
+                
+                ;12 bytes for filename  BA  C0
+                lda #$2E
+                jsr StoreCurrentAInMemory
+                jsr StoreCurrentAInMemory
+                ;add 8 spaces
+                lda #$20
+                jsr StoreCurrentAInMemory
+                jsr StoreCurrentAInMemory
+                jsr StoreCurrentAInMemory
+                jsr StoreCurrentAInMemory
+                jsr StoreCurrentAInMemory
+                jsr StoreCurrentAInMemory
+                jsr StoreCurrentAInMemory
+                jsr StoreCurrentAInMemory
+                jsr StoreCurrentAInMemory
+                jsr StoreCurrentAInMemory
+                
+                ;add 10 for date
+                jsr StoreCurrentAInMemory
+                jsr StoreCurrentAInMemory
+                jsr StoreCurrentAInMemory
+                jsr StoreCurrentAInMemory
+                jsr StoreCurrentAInMemory
+                jsr StoreCurrentAInMemory
+                jsr StoreCurrentAInMemory
+                jsr StoreCurrentAInMemory
+                jsr StoreCurrentAInMemory
+                jsr StoreCurrentAInMemory
+
+                ;add 5 for time        
+                jsr StoreCurrentAInMemory
+                jsr StoreCurrentAInMemory
+                jsr StoreCurrentAInMemory
+                jsr StoreCurrentAInMemory
+                jsr StoreCurrentAInMemory
+                
+                ;add 'D' for directory
+                lda #$44
+                jsr StoreCurrentAInMemory
+                lda #0
+                jsr StoreCurrentAInMemory
+                jsr StoreCurrentAInMemory
+                
+    SkipLines:
+    
+    ldy #0
+    @nxt2:
+        jsr IncBankPointer2
+        iny
+        cpy #32
+        bne @nxt2    
+
+    inc FILECOUNT_CURRENT
+    
+
+    
+    NoSubdir:
+ 
+   ;record:  
+    ;      SS :               2 byte blocksize, hex
+    ;      AAAAAAAAAAAA:     12 byte file name
+    ;      NNNNNNN            8 bytes size
+    ;      DDDDDDDDDD:       10 byte date
+    ;      TTTTT:             5 byte time
+    ;       type:             1 byte
+    ;      PTR LFN            2 byte pointer to long filename   
+    ;      total 40 bytes
+    
+   ;;;;;;;;;;;;;;;;;;;;;;;;;;;   
+    ;;;;;;;;;;;2x aanroepen 1x met alleen dirs en 1x met alleen files
+    
+
+    
+    
+    lda #0  ;dirs
+    sta DOS_DIR_TYPE
+    jsr LoadFilesList2
+    
+    jsr DecBankPointer
+    jsr DecBankPointer
+    jsr DecBankPointer
+    jsr DecBankPointer
+
+    ;2 fileheaders are added due to BLOCKS FREE line, dirty solution!!!
+    ldy #0
+                
+    @nxt:
+        jsr DecBankPointer2
+        iny
+        cpy #64
+        bne @nxt  
+      
+    
+    lda #1  ;files
+    sta DOS_DIR_TYPE
+    jsr LoadFilesList2  
+    
+ 
+    
+rts
+;; REAL END OF READ
 
 NextPage:
     jsr LowlightRow
@@ -5067,55 +5343,53 @@ jmp lp
 DoRTS:
 rts
 
-;Load files or directory list for current window
 LoadFilesList2:
-
-    jsr SetRamBank
- 
+    
+  ;  lda FILECOUNT_CURRENT
+  
+  ;  jsr print_hex
+  ;  jmp hlt
+  ;  cmp SET_MAX_FILES_COUNT
+  ;  bpl DoRTS   ;bpl>128 doet gek!!!!!!!!!!!!!!
+    
     sec
-    lda #SET_MAX_FILES_COUNT
+    lda SET_MAX_FILES_COUNT
     sbc FILECOUNT_CURRENT
     bcc DoRTS
+    
 
-
-    lda #1   
-    ldx DEVICE_CURRENT ;#8  
-    ldy #0  
+    lda #1   ; Logical Number = 1
+    ldx DEVICE_CURRENT ;#8   ; Device = "SD card" (emulation host FS)
+    ldy #0   ; Secondary Address = 15: dos command channel
     jsr SETLFS
 
-    
-    CopyAddrUntilZero DOS_DIR,CMD_BUFFER,CNT
-    
+
     lda DOS_DIR_TYPE
     cmp #1
     beq @DoFiles
     ;directories
-    lda CNT 
-    ldx #<CMD_BUFFER
-    ldy #>CMD_BUFFER  
+    lda #(DOS_DIR_END-DOS_DIR) ; command
+    ldx #<DOS_DIR
+    ldy #>DOS_DIR   
     jmp @Continue
-   
+    
     @DoFiles:
         ;overwrite if we need files
-        CopyAddrUntilZero DOS_FILES,CMD_BUFFER,CNT
-        
-        lda CNT 
-        ldx #<CMD_BUFFER
-        ldy #>CMD_BUFFER 
+        lda #(DOS_FILES_END-DOS_FILES) ; command
+        ldx #<DOS_FILES
+        ldy #>DOS_FILES 
     @Continue:
     
     jsr SETNAM
     jsr OPEN
     
-    
     LDX #1
     jsr CHKIN
     
-    ;Read 8 bytes to skip over 00 bytes which are not line ends
+    ;Read 8 bytes to skip over 00 bytes which are not line end
     ldy #0
     :
         jsr CHRIN 
-
         iny
         cpy #8
         bne :-
@@ -5137,15 +5411,15 @@ LoadFilesList2:
     NextByte:
         
         lda PAGE_FILE_COUNT
-        cmp #SET_MAX_FILES_COUNT
+        cmp SET_MAX_FILES_COUNT
         bne @Continuex
             dec PAGE_CURRENT_USE    ;pages to skip
             stz PAGE_FILE_COUNT 
 
         @Continuex:
         
-        jsr READST     
-        bne Goto_EndOfFile      
+        jsr READST     ; call READST (read status byte)
+        bne Goto_EndOfFile        ; either EOF or read error
         jsr CHRIN       ;get next byte
         
         
@@ -5184,7 +5458,10 @@ LoadFilesList2:
         beq @Continuey
 
             ;skip this file
-            jsr CHRIN   ;skip past potentional zero bytes in line number and file size
+           ; jsr WaitKey
+  
+
+            jsr CHRIN   ;skip past potention zero bytes in line number and file size
             jsr CHRIN
             jsr CHRIN
             jsr CHRIN
@@ -5200,7 +5477,7 @@ LoadFilesList2:
                  
             cmp #$2E    ;.
             beq @SkipCount
-           
+            ;deze moet NIET uitgevoerd worden als het . of .. is......
             inc PAGE_FILE_COUNT
             @SkipCount:
             
@@ -5225,11 +5502,11 @@ LoadFilesList2:
         
         ;2 bytes contain file size
         jsr CHRIN
-        jsr StoreCurrentAInMemory
+        StoreCurrentAInMemoryMacro
         sta TMP_FILESIZE
      
         jsr CHRIN
-        jsr StoreCurrentAInMemory
+        StoreCurrentAInMemoryMacro
         sta TMP_FILESIZE+1
         
         ;2  bytes containing KB or MB, store them for later use
@@ -5262,6 +5539,9 @@ LoadFilesList2:
         beq EndOfFilename
         ;not endeyet, so continu 
 
+        cmp #$60       ;vergelijken met char boven kleine letter A
+        bmi @IsPrintable   ;als ie kleiner is dan gewoon afdrukken
+        sbc #32       ;anders naar uppercase transformeren door 32 er af te halen
     
         @IsPrintable:
         
@@ -5274,14 +5554,12 @@ LoadFilesList2:
             jsr DecBankPointer
             jsr DecBankPointer
             
-     
-            
             ldx #0
             jmp NextByte
             
         
         @Continue3:
-        sta TMPSTRING,y
+        sta LONG_FILE_NAME,y
         iny
         
         cpy #13 ;if filename is longer then 12 bytes
@@ -5290,7 +5568,7 @@ LoadFilesList2:
             jsr DecBankPointer
             
             lda #$2A
-            jsr StoreCurrentAInMemory
+            StoreCurrentAInMemoryMacro
            
         jmp @Continue
         
@@ -5298,7 +5576,7 @@ LoadFilesList2:
         ;check if length > 12 then do nothing
         cpy #13
         bpl @Continue
-        jsr StoreCurrentAInMemory 
+        StoreCurrentAInMemoryMacro 
         
         @Continue:
     jmp NextByte
@@ -5307,7 +5585,7 @@ LoadFilesList2:
         cpy #12
         bpl @NoSpaces
         lda #$0
-        jsr StoreCurrentAInMemory
+        StoreCurrentAInMemoryMacro
         iny
         cpy #12
         bpl @NoSpaces
@@ -5315,16 +5593,16 @@ LoadFilesList2:
         ;add spaces
         lda #$20
         @lpp:
-            jsr StoreCurrentAInMemory
+            StoreCurrentAInMemoryMacro
             iny
             cpy #12
             bmi @lpp 
         @NoSpaces:
         
-        ;store long filename in seperate rambank
+        
+        ;store long filename in seperate rambank TODO!!!!
         cpy #13     ;check if filename>12
-        bmi Continue3424
-       
+        bmi @Continue
         lda ZP_RAMBANK
         pha
             ;set rambank to long file names
@@ -5340,7 +5618,7 @@ LoadFilesList2:
             sty TMP
             ldy #0
             @lp:
-                lda TMPSTRING,y
+                lda LONG_FILE_NAME,y
                 sta (ZP_PTR2)
                 jsr IncLFNPointer
                 iny
@@ -5354,16 +5632,15 @@ LoadFilesList2:
         
         pla
         sta ZP_RAMBANK
+     
         
-        
-        Continue3424:
+        @Continue:
         ldy #0
         ldx #3  ;read type
-      
+       
     jmp NextByte
     
     Goto_Nextbyte: jmp NextByte
-    
     FindType:
         ;find first non $20 byte
         cmp #$20
@@ -5373,26 +5650,21 @@ LoadFilesList2:
         cmp #$44    ;D
         bne @NoDirectory
         ;store dir caption instead of size
-                lda #' '
-                jsr StoreCurrentAInMemory
-                jsr StoreCurrentAInMemory
-                jsr StoreCurrentAInMemory
-                lda #'<'
-                jsr StoreCurrentAInMemory
-                lda #'d'
-                jsr StoreCurrentAInMemory
-                lda #'i'
-                jsr StoreCurrentAInMemory
-                lda #'r'
-                jsr StoreCurrentAInMemory
-                lda #'>'
-                jsr StoreCurrentAInMemory
-               
-               
+            ldy #0
+            @lp123:
+                lda CAPTION_DIR,y
+                StoreCurrentAInMemoryMacro
+                iny
+                cpy #8
+                bne @lp123
+                
         jmp @SizeDone
         @NoDirectory:
 
             ;convert and store file size, Size is max 8 bytes incl  designator
+            
+          ;  jsr ClearHex2DecValue   ;get ready to convert blocksize to dec
+
             lda TMP_FILESIZE
             sta value_32bit
 
@@ -5400,7 +5672,7 @@ LoadFilesList2:
             sta value_32bit+1       
             jsr ConvertHex2Dec16Bitx           
         
-            ;copy 4 bytes as max 9999mb (more then fat 32 allows)
+            ;copy 4 bytes as max 9999mb (more then fat 32 alows)
             ldy #RESULT_LENGTH
             dey
             dey
@@ -5409,29 +5681,33 @@ LoadFilesList2:
             
             @lp1234:
                 lda result_32bit,y
-                jsr StoreCurrentAInMemory
+                StoreCurrentAInMemoryMacro
                 iny
                 cpy #RESULT_LENGTH+1
                 bne @lp1234
         
             lda #$20    ;space between size and designator
-            jsr StoreCurrentAInMemory
+            StoreCurrentAInMemoryMacro
                     
             ;add designator
             lda TMP_FILESIZE_DESIGNATOR
-            jsr StoreCurrentAInMemory
+            StoreCurrentAInMemoryMacro
         
             lda TMP_FILESIZE_DESIGNATOR+1
-            jsr StoreCurrentAInMemory
+            StoreCurrentAInMemoryMacro
         @SizeDone:
          
-        ;Skip 3 bytes to start of date
+        ;Skip 4 bytes to start of date
         jsr CHRIN
         jsr CHRIN
         jsr CHRIN
-
+      ;  jsr CHRIN
         
         ldx #4  ;store date
+
+
+                
+       ; @Continue:
     jmp NextByte
     
     StoreDateTime:
@@ -5439,11 +5715,12 @@ LoadFilesList2:
       
         cmp #0
         beq @NoDateTimeFound      
+       ; StoreCurrentAInMemoryMacro
         ldy #0
         @lp12345:
             jsr CHRIN
             
-            jsr StoreCurrentAInMemory
+            StoreCurrentAInMemoryMacro
             iny
             cpy #10
             bne @lp12345 
@@ -5453,7 +5730,7 @@ LoadFilesList2:
         ldy #0
         @lp1234566:
             jsr CHRIN
-            jsr StoreCurrentAInMemory
+            StoreCurrentAInMemoryMacro
             iny
             cpy #5
             bne @lp1234566  
@@ -5463,14 +5740,15 @@ LoadFilesList2:
             @lp44:
                 
                 lda #$20
-                jsr StoreCurrentAInMemory
-             
+                StoreCurrentAInMemoryMacro
+                ;jsr CHRIN  ;stop reading, there is nothing there if no date
                 inx
                 cpx #15
             bne @lp44
                 
                 
                 ;we are already at the next line
+                ;sta TMP2
                 jsr StoreEndOfFile
                 
                 lda TMP3
@@ -5484,7 +5762,33 @@ LoadFilesList2:
         
         
         jsr StoreEndOfFile
+jmp SkipStore
+        ;store type
+        lda TMP
+        StoreCurrentAInMemoryMacro
 
+        ;store pointer for longfile name
+        lda LFN_Pointer
+        StoreCurrentAInMemoryMacro
+        lda LFN_Pointer+1
+        StoreCurrentAInMemoryMacro
+        
+        inc FILECOUNT_CURRENT
+        
+        ;backup start if next line
+        lda ZP_PTR
+        sta LAST_START_POINTER
+        lda ZP_PTR+1
+        sta LAST_START_POINTER+1
+        
+       
+        
+        ldx FILECOUNT_CURRENT
+        cpx SET_MAX_FILES_COUNT
+        bpl EndOfFile2   ;maximum files per read
+        
+        ldx #0  ;search of next line
+SkipStore:
         
         lda TMP3
         cmp #1
@@ -5495,12 +5799,11 @@ LoadFilesList2:
 
     
     EndOfFile:
-      
+      ;  jsr WaitKey
     jmp CleanUp
-    
     EndOfFile2:
         
-        ;add load next page option
+        ;add load next 200 files option
  
         lda LAST_START_POINTER
         sta ZP_PTR
@@ -5508,15 +5811,15 @@ LoadFilesList2:
         sta ZP_PTR+1  
         
         lda #0
-        jsr StoreCurrentAInMemory
-        jsr StoreCurrentAInMemory
+        StoreCurrentAInMemoryMacro
+        StoreCurrentAInMemoryMacro
         
         
         ;add page down line!!!!
         ldx #0
         @lp:
             lda MSG_LOAD_MORE,x
-            jsr StoreCurrentAInMemory
+            StoreCurrentAInMemoryMacro
             inx
             cmp #0
             bne @lp
@@ -5526,18 +5829,18 @@ LoadFilesList2:
         lda #$20
         
         @lp2:
-            jsr StoreCurrentAInMemory
+            StoreCurrentAInMemoryMacro
             inx
-            cpx #SET_RECORD_LENGTH
+            cpx SET_RECORD_LENGTH
             bne @lp2
         jsr DecBankPointer
         jsr DecBankPointer
         jsr DecBankPointer
-
+       ; jsr DecBankPointer
         lda #$3e
-        jsr StoreCurrentAInMemory
+        StoreCurrentAInMemoryMacro
         jsr IncBankPointer  
-
+      ;  jsr IncBankPointer  
         jsr IncBankPointer 
         inc FILECOUNT_CURRENT
 
@@ -5558,16 +5861,17 @@ rts
 StoreEndOfFile:
         ;store type
         lda TMP
-        jsr StoreCurrentAInMemory
+        StoreCurrentAInMemoryMacro
 
         ;store pointer for longfile name
         lda LFN_Pointer
-        jsr StoreCurrentAInMemory
+        StoreCurrentAInMemoryMacro
         lda LFN_Pointer+1
-        jsr StoreCurrentAInMemory
+        StoreCurrentAInMemoryMacro
         
         inc FILECOUNT_CURRENT
-
+       ; lda #$41
+       ; jsr CHROUT
         ;backup start if next line
         lda ZP_PTR
         sta LAST_START_POINTER
@@ -5578,8 +5882,8 @@ StoreEndOfFile:
         stz TMP3
         
         ldx FILECOUNT_CURRENT
-        cpx #SET_MAX_FILES_COUNT
-        bcs Eof444 ;maximum files per read
+        cpx SET_MAX_FILES_COUNT
+        bpl Eof444 ;EndOfFile2   ;maximum files per read
         
         ldx #0  ;search of next line
 
@@ -5591,15 +5895,23 @@ Eof444:
     ldx #0    
 rts
 
+fSetGeneralPointer:
+    ;sGeneral is a global address used for different puposes
+    pha
+        lda #<sGeneral
+        sta ZP_PTR
+        lda #>sGeneral
+        sta ZP_PTR+1    
+    pla
+rts
 
-;Print a blank line with border chars on the screen
 PrintScrnLineBlank2:
     phy
     phx
         sec
         jsr PLOT    ;read cur post
         
-        lda #$A0
+        lda #$7D
         jsr CHROUT
         
         clc
@@ -5610,7 +5922,7 @@ PrintScrnLineBlank2:
         clc
         jsr PLOT
 
-        lda #$A0
+        lda #$7D
         jsr CHROUT
         
         tya
@@ -5621,7 +5933,7 @@ PrintScrnLineBlank2:
         clc
         jsr PLOT
 
-        lda #$A0
+        lda #$7D
         jsr CHROUT 
     
         jsr print_lf
@@ -5630,7 +5942,34 @@ PrintScrnLineBlank2:
     
 rts
 
-;reset colors to white over blue
+PrintScrnLineBlank:
+    phy
+    phx
+        sec
+        jsr PLOT    ;read cur post
+        
+        lda #$7D
+        jsr CHROUT
+        
+        ldy #39
+        clc
+        jsr PLOT
+
+        lda #$7D
+        jsr CHROUT
+        
+        ldy #78
+        clc
+        jsr PLOT
+
+        lda #$7D
+        jsr CHROUT 
+    
+        jsr print_lf
+    plx
+    ply
+    
+rts
 ResetColor:
     lda #$1F    ;first background
     jsr CHROUT
@@ -5640,278 +5979,414 @@ ResetColor:
     jsr CHROUT
 rts
 
-;Print a line of the screen with special chars
-PrintScreenLine:
-    sta TMP2
-    
-    txa
-    jsr CHROUT
-    ldx #0
-    :
-        lda TMP
-        jsr CHROUT
-        inx
-        cpx WINDOW_WIDTH
-        bne :-
-    lda TMP2
-    jsr CHROUT
-    ldx #0
-    :
-        lda TMP
-        jsr CHROUT
-        inx
-        cpx WINDOW_WIDTH
-        bne :-
-    tya
-    jsr CHROUT
-    jsr print_lf
 
-rts
 
-PrintFromPointer:
-    ldy #0
-    :
-        lda (ZP_PTR),y
-        cmp #0
-        beq @PrintDone
-        jsr CHROUT
-        iny
-        jmp :-
-        
-    @PrintDone:
-rts
-
-;Print a blank screen with the structure, header and footer
 PrintMainScreen2:
 jmp PrintMainScreen2_start
-    .ifdef uselauncher
-        ProgramTitle:   .asciiz "- x16 Ultimate File Manager v1.2 RAM -"
-    .endif
-    .ifndef uselauncher
-        ProgramTitle:   .asciiz "- x16 Ultimate File Manager v1.2 ROM -"
-    .endif
+    WINDOW_WIDTH: .byte $0
     
-    ColumnHeaders80:    .asciiz "-Filename-     -Size-   -Date/Time-"
-    ColumnHeaders64:    .asciiz "-Filename-     -Size-  -Date-"
-    ColumnHeaders40:    .asciiz "-Filename-"
+    ;----------- 80 cols ---------------------------
+    scrnTitel80: .asciiz "                       - x16 ultimate file manager v1.0 -"
+    scrnLineTop80:.byte $B0
+                .byte $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63
+                .byte $b2
+                .byte $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63
+                .byte $AE
+                .byte $20
+    .byte $0
 
-    HelpInfo40: .byte "F2=info F3=part F4=edit  F5=copy F6=ren",$0d,"       F7=move F8=mkdir F10=quit",$0
-    HelpInfo64: .byte "   F2=info F3=part F4=edit F5=copy F6=rename F7=move F8=mkdir",$0d,"                      F10=quit Del=delete ",$0
-    HelpInfo80: .byte " F2=info F3=part F4=edit F5=copy F6=rename F7=move F8=mkdir F10=quit Del=delete",$0
+    scrnLineHeader80:.byte $7D
+                .byte $9e
+                .byte "-filename-     -size-   -date/time-   "
+                .byte $05,$7D,$9e
+                .byte "-filename-     -size-   -date/time-   "
+                .byte $05,$7D
+                .byte $20
+    .byte $0
+
+    scrnLineMiddle80:.byte $AB
+                .byte $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63
+                .byte $7B
+                .byte $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63
+                .byte $B3
+                .byte $20
+    .byte $0
+                                    
+    scrnLineEnd80:.byte $AD
+                .byte $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63
+                .byte $B1
+                .byte $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63
+                .byte $BD
+                .byte $20                    
+
+    .byte $00
+    
+    scrnLineButtons80:  
+                        .byte " f2=info f3=part" ;"
+                        .byte " f4=edit f5=copy f6=rename f7=move f8=mkdir f10=quit del=delete "
+                        .byte $0
+
+    scrnBlank80: .res 80,$20
+                 .byte $0
+
+    ;----------- 64 cols ---------------------------
+    scrnTitel64: .asciiz "               - x16 ultimate file manager v1.0 -"
+    scrnLineTop64:.byte $B0
+                .byte $63,$63,$63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63
+                .byte $b2
+                .byte $63,$63,$63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63
+                .byte $AE
+                .byte $0d
+    .byte $0
+
+    scrnLineHeader64:.byte $7D
+                .byte $9e
+                .byte "-filename-     -size-  -date- "
+                .byte $05,$7D,$9e
+                .byte "-filename-     -size-  -date- "
+                .byte $05,$7D
+                .byte $0d
+    .byte $0
+
+    scrnLineMiddle64:.byte $AB
+                .byte $63,$63,$63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63
+                .byte $7B
+                .byte $63,$63,$63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63
+                .byte $B3
+                .byte $0d
+    .byte $0
+                                    
+    scrnLineEnd64:.byte $AD
+                .byte $63,$63,$63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63
+                .byte $B1
+                .byte $63,$63,$63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63
+                .byte $BD
+                .byte $0d                   
+
+    .byte $00
+    
+    scrnLineButtons64: .byte "   f2=info f3=part f4=edit f5=copy f6=rename f7=move f8=mkdir",$0d,"                      f10=quit del=delete ",$0
+
+
+
+
+    ;----------- 40 cols ---------------------------
+    scrnTitel40: .asciiz "  - x16 ultimate file manager v1.0 -"
+    scrnLineTop40:.byte $B0
+                .byte $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63
+                .byte $b2
+                .byte $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63
+                .byte $AE
+                .byte $0d
+    .byte $0
+
+    scrnLineHeader40:.byte $7D
+                .byte $9e
+                .byte "-filename-        "
+                .byte $05,$7D,$9e
+                .byte "-filename-        "
+                .byte $05,$7D
+                .byte $0d,$05
+    .byte $0
+
+    scrnLineMiddle40:.byte $AB
+                .byte $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63
+                .byte $7B
+                .byte $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63
+                .byte $B3
+                .byte $0d
+    .byte $0
+                                    
+    scrnLineEnd40:.byte $AD
+                .byte $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63
+                .byte $B1
+                .byte $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63
+                .byte $BD
+                .byte $0d                    
+
+    .byte $00
+    
+    scrnLineButtons40: .byte "f2=info f3=part f4=edit  f5=copy f6=ren",$0d,"       f7=move f8=mkdir f10=quit",$0
+
+
     
 PrintMainScreen2_start:
-
     ;set number of lines to 255 to prevent scrolling on writing past the screen
   ;  lda #$FF
   ;  sta $0387
     
-    jsr SetCharsetIso
-
-      
+    
+    lda #$8F
+    jsr CHROUT
+    lda #$0E
+    jsr CHROUT
+    
     jsr ResetColor
     jsr clearscreen    
 
+    lda #2
+    jsr $FF62   ;set charset
+ 
     clc
     lda SCREEN_ROWS
-
-    
     sbc #10
     sta ListSize 
     
     lda SCREEN_COLS
-    sta TMP
-    lsr ;divide by 2
-    sec
-    sbc #2  ;window withs
-    sta WINDOW_WIDTH
-    
-    jsr print_lf
-
-    ;get count of title
-    stz CNT
-    ldx #0
-    :
-        lda ProgramTitle,x
-        cmp #0
-        beq EndOfProgramTitle
-        inc CNT
-        inx
-        jmp :-
-
-    EndOfProgramTitle:
-
-  
-
-    lda CNT
-    lsr ;divide by 2
-    sta CNT
-    lda WINDOW_WIDTH
-
-        
-    sec
-    sbc CNT
-    ldx #1
-    tay
-    iny
-    iny
-
-
-    clc
-    jsr PLOT
-
-    ;print title
-    ldx #0
-    :
-        lda ProgramTitle,x
-        cmp #0
-        beq @PrintDone
-        jsr CHROUT
-        inx
-        jmp :-
-    
-    @PrintDone:
-
-    jsr print_lf
-    jsr print_lf
-    
-    ;print top border line
-    lda #$A1
-    sta TMP     ;between byte
-    ldx #$A2    ;left byte
-    ldy #$A3    ;right byte
-    lda #$A4    ;middle byte
-    jsr PrintScreenLine
-
-    jsr PrintScrnLineBlank2
-    
-
-    ;print line in between
-    lda #$A1
-    sta TMP     ;between byte
-    ldx #$A5    ;left byte
-    ldy #$A7    ;right byte
-    lda #$A6    ;middle byte
-    jsr PrintScreenLine    
-    
-    jsr PrintScrnLineBlank2
-    ldx #0
-    :
-        phx
-            jsr PrintScrnLineBlank2
-        plx
-         inx
-         cpx ListSize
-         bne :-
-
-    ;print bottom line
-    lda #$A1
-    sta TMP     ;between byte
-    ldx #$A8    ;left byte
-    ldy #$A9    ;right byte
-    lda #$AA    ;middle byte
-    jsr PrintScreenLine 
-    
-    
-    ;print column headers
-    lda #$9E    
-    jsr CHROUT  ;set color
-
-    lda #1
-    sta SET_SHOWDATE
-    sta SET_SHOWTIME
-    sta SET_SHOWSIZE
-    lda #10 
-    sta SET_DATE_LEN   
-    
-    lda SCREEN_COLS
     cmp #80
-    bne Not80
-        ldx #<ColumnHeaders80
-        ldy #>ColumnHeaders80
-        lda #<HelpInfo80
-        sta ZP_PTR2
-        lda #>HelpInfo80
-        sta ZP_PTR2+1        
-        jmp SetPointerDone
-    Not80:
+    beq To80Cols
     cmp #40
-    bne Not40
-        ldx #<ColumnHeaders40
-        ldy #>ColumnHeaders40
-        lda #<HelpInfo40
-        sta ZP_PTR2
-        lda #>HelpInfo40
-        sta ZP_PTR2+1        
-
-        stz SET_SHOWDATE
-        stz SET_SHOWTIME
-        stz SET_SHOWSIZE        
-        jmp SetPointerDone
-    Not40:
+    beq Goto_To40Cols
     cmp #64
-    bne SetPointerDone
-        ldx #<ColumnHeaders64
-        ldy #>ColumnHeaders64
-        lda #<HelpInfo64
-        sta ZP_PTR2
-        lda #>HelpInfo64
-        sta ZP_PTR2+1        
-        stz SET_SHOWTIME
-     ;   stz SET_SHOWTYPE
-        lda #8
-        sta SET_DATE_LEN           
-    SetPointerDone:
+    beq Goto_To64Cols
+
     
-    stx ZP_PTR
-    sty ZP_PTR+1
     
-    ;left window
-    ldx #6
-    ldy #1
-    clc
-    jsr PLOT
-    jsr PrintFromPointer
-    
-    ;right window
-    ldx #6
-    lda #2
-    clc
-    adc WINDOW_WIDTH
-    tay
-    
-    clc
-    jsr PLOT
-    jsr PrintFromPointer
-    jsr ResetColor
-       
-    ;print help buttons
-    lda ZP_PTR2
-    sta ZP_PTR
-    lda ZP_PTR2+1
-    sta ZP_PTR+1
-    
-    ldx SCREEN_ROWS
-    dex
-    dex
-    ldy #0
-    clc
-    jsr PLOT
-    jsr PrintFromPointer
-    
+    rts 
+    Goto_To40Cols:
+        jmp To40Cols
+    Goto_To64Cols:
+        jmp To64Cols
+    To80Cols:
+        lda #38
+        sta  WINDOW_WIDTH
+        lda #10
+        sta SET_DATE_LEN
+
+            jsr print_lf
+            PrintLine scrnTitel80
+            jsr print_lf
+            jsr print_lf
+            PrintLine scrnLineTop80
+            jsr PrintScrnLineBlank2 ;PrintLine scrnLineBlank
+            PrintLine scrnLineMiddle80
+            PrintLine scrnLineHeader80
+            ldx ListSize
+            @loop:
+                jsr PrintScrnLineBlank2 
+                ;PrintLine scrnLineBlank
+                dex
+                beq @loopdone
+                bra @loop
+            @loopdone:
+            PrintLine scrnLineEnd80
+           jsr print_lf
+            PrintLine scrnLineButtons80
+
+            lda #1
+            sta SET_SHOWDATE
+            sta SET_SHOWTIME
+            sta SET_SHOWSIZE
+            stz SET_SHOWTYPE       
+        
+        
+        jmp ContinuePrint
  
-    
-    
-rts
+     To64Cols:
+        lda #30
+        sta  WINDOW_WIDTH
+        lda #8 ;skip first 2 bytes
+        sta SET_DATE_LEN
+        
+            jsr print_lf
+            PrintLine scrnTitel64
+            jsr print_lf
+            jsr print_lf
+            PrintLine scrnLineTop64
+            jsr PrintScrnLineBlank2 ;PrintLine scrnLineBlank
+            PrintLine scrnLineMiddle64
+            PrintLine scrnLineHeader64
+            ldx ListSize
+            @loop:
+                jsr PrintScrnLineBlank2 
+                ;PrintLine scrnLineBlank
+                dex
+                beq @loopdone
+                bra @loop
+            @loopdone:
+            PrintLine scrnLineEnd64
+            PrintLine scrnLineButtons64
+            
+            lda #1
+            sta SET_SHOWDATE
+            stz SET_SHOWTIME
+            sta SET_SHOWSIZE
+            stz SET_SHOWTYPE       
+        
+        
+        jmp ContinuePrint
+        
+    To40Cols:
+        
+        lda #18
+        sta  WINDOW_WIDTH
+        lda #10 
+        sta SET_DATE_LEN
+        
+            jsr print_lf
+            PrintLine scrnTitel40
+            jsr print_lf
+            jsr print_lf
+            PrintLine scrnLineTop40
+            jsr PrintScrnLineBlank2 ;PrintLine scrnLineBlank
+            PrintLine scrnLineMiddle40
+            PrintLine scrnLineHeader40
+            ldx ListSize
+            @loop:
+                jsr PrintScrnLineBlank2 
+                ;PrintLine scrnLineBlank
+                dex
+                beq @loopdone
+                bra @loop
+            @loopdone:
+            PrintLine scrnLineEnd40
+           ; jsr print_lf
+            PrintLine scrnLineButtons40
+            
+            stz SET_SHOWDATE
+            stz SET_SHOWTIME
+            stz SET_SHOWSIZE
+            lda #1
+            sta SET_SHOWTYPE
+
+        jmp ContinuePrint
    
 
 
+        
+    ContinuePrint: 
+
+    
+    jsr ResetColor
+
+rts
+
+PrintMainScreen:
+    ;Mode 64x50/64x25 
+    ;Per window: 30 chars
+    ;  12 chars filename
+    ;   1 space
+    ;   7 chars size    ; is now 9!!   65000
+    ;   1 space
+    ;   10 date??   ;change to 8: 23-01-12 YY-MM-DD
+    ;  totaal: 31   one to many!
+
+    jmp PrintMainScreen_start
+    
+    
+    
+        scrnTitel: .asciiz "                       - x16 ultimate file manager v0.3b -"
+        scrnLineTop:.byte $B0
+                    .byte $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63
+                    .byte $b2
+                    .byte $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63
+                    .byte $AE
+                    .byte $20
+        .byte $0
+
+        scrnLineBlank:.byte $7D
+                    .byte "          ", "          ", "          ", "        "
+                    .byte $7D
+                    .byte "          ", "          ", "          ", "        "
+                    .byte $7D
+                    .byte $20
+        .byte $0
+        ;filename: 12 chrs
+        ;size: 9 chars
+        ;total: 21 chars does not fit in 40
+        scrnLineHeader:.byte $7D
+                    .byte "-filename-     -size-   -date/time-   "
+                    .byte $7D
+                    .byte "-filename-     -size-   -date/time-   "
+                    .byte $7D
+                    .byte $20
+        .byte $0
+
+        scrnLineMiddle:.byte $AB
+                    .byte $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63
+                    .byte $7B
+                    .byte $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63
+                    .byte $B3
+                    .byte $20
+        .byte $0
+                                        
+        scrnLineEnd:.byte $AD
+                    .byte $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63
+                    .byte $B1
+                    .byte $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63,$63,$63, $63,$63,$63,$63,$63,$63,$63,$63
+                    .byte $BD
+                    .byte $20                    
+
+        .byte $00
+        
+        scrnLineButtons: .asciiz "f2=info f4=edit f5=copy f6=rename f8=mkdir f10=quit del=delete "
+
+    PrintMainScreen_start:
+    lda #2
+    jsr $FF62   ;set charset to ISO
+    ;reset screencolor. Probably not the best solution
+    jsr ResetColor
+    
+    jsr clearscreen    
+ 
+    clc
+    lda SCREEN_ROWS
+    sbc #9
+    sta ListSize
+    
+    jsr print_lf
+    PrintLine scrnTitel
+    jsr print_lf
+    jsr print_lf
+    PrintLine scrnLineTop
+    jsr PrintScrnLineBlank ;PrintLine scrnLineBlank
+    PrintLine scrnLineMiddle
+    PrintLine scrnLineHeader
+    ldx ListSize
+    loop:
+        jsr PrintScrnLineBlank 
+        ;PrintLine scrnLineBlank
+        dex
+        beq loopdone
+        bra loop
+    loopdone:
+    PrintLine scrnLineEnd
+    PrintLine scrnLineButtons
+    
+    ldx #6
+    ldy #1
+    jsr PLOTVeraColor
+    lda #$67
+    ldx #1
+    @next:
+        STA $9F23
+        inx
+        cpx #38
+        beq @Klaar
+    jmp @next
+
+@Klaar:
+
+    ldx #6
+    ldy #41
+    jsr PLOTVeraColor
+    lda #$67
+    ldx #1
+    @next2:
+        STA $9F23
+        inx
+        cpx #38
+        beq @Klaar2
+    jmp @next2
+
+@Klaar2:
+rts
 
 PrintAToVera:
     jsr ConvertPetsciiToVera
     STA $9F23
 rts
 
-;Same as kernal PLOT but this sets the vera address to the x,y position with a 2 byte auto increment
 PLOTVera:
     ;x=line
     ;y=col
@@ -5976,8 +6451,70 @@ PLOTVera:
     
 rts
 
-;;;;TODO: almost the same is PLOTVera, merge into one!!
-;Same as kernal PLOT but this sets the vera address to the x,y position with a 1 byte auto increment
+PLOTVeraColor:
+    ;x=line
+    ;y=col
+    ;line-length: 256 bytes
+
+    jsr InitAdder24bit
+    
+    ;VERA_START_TEXT =$21B000
+
+    lda #$01                ;low
+    sta Adder24bitValue
+
+    lda #$B0                ;middle
+    sta Adder24bitValue+1
+    
+    lda #$21                ;high
+    sta Adder24bitValue+2
+    
+    ;add lines
+    cpx #$0
+    beq PlotColX ;Line is Ok
+        phx
+           
+            ;set value to add       $0100   = 256
+            lda #$00
+            sta Adder24bitToAdd    
+            lda #$01
+            sta Adder24bitToAdd+1  
+        
+            @loop:
+                jsr Adder24bit  ;add 256 for each line as 1 line is 256 bytes
+
+                dex
+                cpx #0
+            bne @loop            
+        plx
+    
+    PlotColX:
+        phy
+            
+            tya     ;y contains byte x2
+            sta Adder24bitToAdd    
+            lda #$00
+            sta Adder24bitToAdd+1  
+            jsr Adder24bit  ;2 times
+            jsr Adder24bit     
+        ply
+        
+    LDA #$00
+    STA $9F25   ;VERA CTRL
+
+    LDA Adder24bitValue                ;$N1B000
+    STA $9F20   ;ADDRES_L
+
+    LDA Adder24bitValue+1    ;ADDRES_M   B0      ;pos
+    STA $9F21
+
+    LDA Adder24bitValue+2    ;ADDRES_H -> $2X for increment with two's, $X1 address
+    STA $9F22    
+    
+         
+    
+rts
+
 PLOTVeraSingle:
     ;x=line
     ;y=col
@@ -6044,14 +6581,12 @@ PLOTVeraSingle:
     
 rts
 
-;Copy a file using the dos command
-;same device, other partition: will not work use DOS"C:" instead
 CopyUsingDos:
-jmp CopyUsingDos_start
-
+    jmp CopyUsingDos_start
+    ;     DOS"C2:CALCX.PRG=1:CALC.PRG"  (dest=source)
     DOS_COPY: .asciiz "c[2]:[r]/[f]=[1]:[s]/[f]"
 
-CopyUsingDos_start:
+    CopyUsingDos_start:
 
     CopyAddrUntilZero DOS_COPY,CMD_BUFFER
     
@@ -6063,19 +6598,38 @@ CopyUsingDos_start:
     jsr ReplaceParams   ;replace message params with values
     stz CMD_BUFFER_LENGTH
     jsr DoDosCMD
-
+ ;   PrintUntilZero CMD_BUFFER
+ ;   jsr print_lf
+ ;   PrintUntilZero CMD_BUFFER_RESULT
+ ;   jsr WaitKey
 rts
 
-;Copy selected file to direcoty of other window
 CopyAFile:
    jmp CopyAFile_Start
-    CD_ROOT: .asciiz "cd:/"
-    PB_LENGTH: .byte 36     ;Length of the progress bar
-       
-CopyAFile_Start:  
-    jsr SetRambank63
+
+   SourceFile: .res 255 ; .byte "/ccc/copyt.txt" ; .res 255
+               .byte $0
+   SourceFileCnt: .byte $0E
+   DestFile: .res 255 ; .byte "/ddd/copyt.txt,s,w" ; .res 255
+             .byte $0
+    DEVICE_DEST: .byte $0
     
-    ;if one of them is partition=hostfs: own copy works
+   DestFileCnt: .byte $12
+   CD_ROOT: .asciiz "cd:/"
+
+   CopyBuffer: .res 255
+   IsEof: .byte $0
+   CopyBuffercnt:    .byte $0 
+   
+    PB_BLOCKS: .byte $0,$0  ;file size in blocks of 254 bytes
+    PB_COUNTER: .byte $0,$0
+    PB_COUNT_CHECK: .byte $0
+    PB_LENGTH: .byte 36
+    PB_CHARS: .byte 0
+    
+CopyAFile_Start:  
+
+    ;if one of them is partition=hostfs: own copt works
     lda PARTITION_CURRENT
     cmp #0
     beq @ContinueCopy
@@ -6086,7 +6640,7 @@ CopyAFile_Start:
     lda PARTITION_CURRENT
     cmp PARTITION_OTHER
     beq @ContinueCopy   ;same partition: will work
-        ;same device, other partition: will not work use DOS"C: instead
+        ;save device, other partition: will not work use DOS"C: instead
         jmp CopyUsingDos
     
 
@@ -6102,18 +6656,26 @@ CopyAFile_Start:
     jsr DoDosCMD
 
 
+    ;Check if is tokenizes Basic
+
+    
+
+
+;count length of commands
+ 
+
    ;count length of commands
 
     CountUntilZero SourceFile,SourceFileCnt
     CountUntilZero DestFile,DestFileCnt
 
    ;Initialize progress bar
-    ;Progressbar is a non-floatingpoint version which approximated the progress, Good enough
+
         jsr LoadCurrentFileSize
-        jsr SetRambank63
+
         jsr InitAdder24bit
         
-        ldx #0   ;Check the amount of times PB_LENGTH fits into 255
+        ldx #0   ;aantal keer dan 20 in blocksize past
             lda PB_LENGTH    ;low byte
             sta Adder24bitToAdd    
             lda #$00    ;high byte
@@ -6147,7 +6709,7 @@ CopyAFile_Start:
             stz PB_COUNT_CHECK
             stz PB_CHARS
 
-    ;set correct x,y for printing the progress bar
+
     clc
      ldx MODAL_ROW
     inx
@@ -6163,7 +6725,8 @@ CopyAFile_Start:
     iny
     iny
     
-
+  ;  ldx #30
+  ;  ldy #21
     jsr PLOT
     
     ;print bar
@@ -6190,7 +6753,8 @@ CopyAFile_Start:
     iny
     iny
         
-
+   ; ldx #30
+   ; ldy #21
     jsr PLOT
     
     ;set color
@@ -6198,27 +6762,43 @@ CopyAFile_Start:
     jsr CHROUT       
     lda #01 ;flip
     jsr CHROUT
-   
+    
+;    lda iCurrentWindow
+;    cmp #0
+;    bne @UseDeviceLeft
+;        lda DEVICE_RIGHT
+ ;       sta DEVICE_OTHER   
+;    jmp @Continue
+ ;   @UseDeviceLeft:
+;        lda DEVICE_LEFT
+;        sta DEVICE_OTHER
+;    @Continue:
+
+    
+    
+    
+ ;   PrintUntilZero SourceFile
+  ;  PrintUntilZero DestFile
+    ;jsr WaitKey
     
     jsr SelectCurrentPartition
-    
-    ;Open file for INPUT    
-    lda #1  
-    ldx DEVICE_CURRENT ;#8  
-    ldy #2  
-    jsr SETLFS
-
-    lda SourceFileCnt
-    ldx #<SourceFile
-    ldy #>SourceFile
-    jsr SETNAM
-    jsr OPEN
+   ;Open file for INPUT    
+   lda #1  
+   ldx DEVICE_CURRENT ;#8  
+   ldy #2  
+   jsr SETLFS
+   lda SourceFileCnt
+   ldx #<SourceFile
+   ldy #>SourceFile
+   jsr SETNAM
+   jsr OPEN
 
     lda PARTITION_CURRENT
     pha
     
     lda PARTITION_OTHER
     sta PARTITION_CURRENT
+   ; jsr SelectCurrentPartition ;this results in an error.  Change partitions with file open probably not good
 
     ;Open file for OUTPUT
     lda #2
@@ -6235,71 +6815,78 @@ CopyAFile_Start:
     sta PARTITION_CURRENT
    
 
-    stz CopyBuffercnt
-    stz IsEof
-    loopCopyByte:
-
-    ;set input channel
-    LDX #1
-    jsr CHKIN   
-
-    ldx #0
-    ReadLoop:   ;read 255 bytes in sequence, or until EOF
-        ;Read byte to A
-        jsr CHRIN
-        sta TMPSTRING,x
-        inx
-        
-        ;check end of file (or error)
-        jsr READST 
-        bne IsEndOfFile  ;eof file, or error
-
-        cpx #255 ;check end of buffer
-        beq ExitReadLoop
-         
-    bra ReadLoop
-         
-
-         
-    IsEndOfFile:
-        lda #1
-        sta IsEof
-    ExitReadLoop:
-
-    inx
-    stx CopyBuffercnt  ;count of current buffer  
-
-    ;Set output channel
-    LDX #2
-    jsr CHKOUT 
     
-    ldx #0
-    WriteLoop:
-        
-        ;Save byte
-        lda TMPSTRING,x
-        inx
-        cpx CopyBuffercnt
-        beq ExitWriteLoop
-        jsr CHROUTbin
-    bra WriteLoop
-    
-    ExitWriteLoop:
-        lda IsEof
-        cmp #1
-        beq @eof
+
+   stz CopyBuffercnt
+   stz IsEof
+   loopCopyByte:
+
+     
+      ;set input channel
+      LDX #1
+      jsr CHKIN   
+   
+      ldx #0
+      ReadLoop:   ;read 255 bytes in sequence, or until EOF
+         ;Read byte to A
+         jsr CHRIN
+         sta CopyBuffer,x
+         ;jsr CHROUT
+         inx
+         
+      
+         ;check end of file (or error)
+         jsr READST 
+         bne IsEndOfFile  ;eof file, or error
+   
+         cpx #255 ;check end of buffer
+         beq ExitReadLoop
+         
+         bra ReadLoop
+         
+
+         
+      IsEndOfFile:
+         
+         lda #1
+         sta IsEof
+         
+      ExitReadLoop:
+      inx
+      stx CopyBuffercnt  ;count of current buffer  
+      
+     
+      
+      ;Set output channel
+      LDX #2
+      jsr CHKOUT 
+      
+      ldx #0
+      WriteLoop:
+         
+         ;Save byte
+         lda CopyBuffer,x
+         inx
+         cpx CopyBuffercnt
+         beq ExitWriteLoop
+         jsr CHROUT
+      bra WriteLoop
+      
+      ExitWriteLoop:
+         lda IsEof
+         cmp #1
+         beq @eof
  
  
     jsr CLRCHN
-    
-    ;update progressbar if needed
-    inc PB_COUNT_CHECK
-    
-    lda PB_COUNT_CHECK
-    cmp PB_COUNTER
-    beq @DoUpdate
-    jmp @NoUpdate
-    @DoUpdate:
+ ;update progressbar if needed
+      inc PB_COUNT_CHECK
+     
+      lda PB_COUNT_CHECK
+      cmp PB_COUNTER
+      beq @DoUpdate
+      jmp @NoUpdate
+      @DoUpdate:
         lda PB_CHARS
         cmp PB_LENGTH
         beq @NoUpdate
@@ -6307,29 +6894,27 @@ CopyAFile_Start:
         jsr CHROUT
         stz PB_COUNT_CHECK
         inc PB_CHARS
-    @NoUpdate:
+      @NoUpdate:
       
       
-   jmp loopCopyByte ;copy next buffer
+   jmp loopCopyByte
 
 
 
    @eof:
 
 
-    jsr CLRCHN
-    lda #2
-    jsr CLOSE
-    lda #1
-    jsr CLOSE
-    jsr ResetColor
-    jsr RestoreRambank
+   jsr CLRCHN
+   lda #2
+   jsr CLOSE
+   lda #1
+   jsr CLOSE
+   jsr ResetColor
+
 rts
 
-
-;check if current file is tokenized basic
 CheckFileType:
-
+    ;check if current file is tokenized basic
 
    jsr GotoCurrentDirectory
 
@@ -6412,146 +6997,193 @@ CheckFileType:
     sta TSRTYPE    
 rts
 
-;Get the current directory when UFM starts
-GetStartDirectory2:
-jmp GetStartDirectory2_start
+GetStartDirectory:
+jmp GetStartDirectory_start
     CURDIRCMD: .asciiz "$=c"
-GetStartDirectory2_start:
+    CUR_PATH: .res 255
+    CMD_GOTO: .byte "cd:/45/dir1"
+    CUR_PATH_REV: .res 255
+    CUR_PATH_LAST_CHAR: .byte $0
+    .byte $00
+
+
+GetStartDirectory_start:
+    ;jump to other dir
+  ;  CopyAddrUntilZero CMD_GOTO,CMD_BUFFER
+ ;   jsr DoDosCMD
+    
     CopyAddrUntilZero CURDIRCMD,CMD_BUFFER,CMD_BUFFER_LENGTH    
 
     lda #1   ; Logical Number = 1
-    ldx $03fe ;#8   ; Device = "SD card" (emulation host FS)
+    ldx #8   ; Device = "SD card" (emulation host FS)
     ldy #0   ; Secondary Address = 15: dos command channel
     jsr SETLFS
+
 
     lda CMD_BUFFER_LENGTH ; command
     ldx #<CMD_BUFFER
     ldy #>CMD_BUFFER
 
     jsr SETNAM
+    
     jsr OPEN
     
     LDX #1
     jsr CHKIN
-    stz CNT
+    
     ldy #0
-    lda #'/'
-    sta CMD_BUFFER,Y
-    iny
-    ldx #0
-    ReadLoop2:
-        jsr READST
-        bne eof22
-
- 
+    :
         jsr CHRIN
-   
-        inc CNT
-        pha
-            lda CNT
-            cmp #30
-        pla
-        bcc ReadLoop2      
-        cmp #$22
-        beq InverseReadByteInX
-        
+        iny
+        cpy #26
+        beq @StartReading
+    jmp :-
+    
+    @StartReading:
+    ldx #0
+    ldy #0
+    lda #$2F
+    sta CUR_PATH_REV,y
+    iny   
+    
+    @read:
+       
+        jsr READST
+        bne @eof
+
+        jsr CHRIN
+        cpx #0
+        beq @CheckStartName
+    
         cpx #1
-        bne ReadLoop2
-        sta CMD_BUFFER,y
-
-        iny
+        beq @StoreName    
     
-    jmp ReadLoop2
+       
+    jmp @read
     
-    InverseReadByteInX:
-        inx
-        cpx #2
-        bne ReadLoop2
-        lda #'/'
-        sta CMD_BUFFER,y
-
+    @CheckStartName:    
+     
+        cmp #$22    ;"
+        bne @read   ;no quote, so continu reading
+        ldx #1  ;store filenames    ;quote found, start storing name
+        
+    jmp @read
+    
+    @StoreName:
+        cmp #$22    ;"
+        beq @NameDone
+       
+        cmp #$2F
+        beq @DoNotAdd
+        sta CUR_PATH_REV,y
         iny
+        
+        @DoNotAdd:
+        sta CUR_PATH_LAST_CHAR
+    jmp @read
+    
+    @NameDone:
+      
+        lda CUR_PATH_LAST_CHAR
+        cmp #$2F
+        beq @DoNotAddSlash
+            lda #$2F
+            sta CUR_PATH_REV,y
+            iny       
+        @DoNotAddSlash:
         ldx #0
-    jmp ReadLoop2
-eof22:
-    lda #0
-    sta CMD_BUFFER+1,y
-
+    jmp @read
     
-    sty CNT
+    @eof:
+   
+    cpy #0
+    bne @NotZeroLength
+    lda #$2f
+    sta CUR_PATH_REV,y
+    iny   
+    @NotZeroLength:
+    lda #0
+    sta CUR_PATH_REV,y
+    
+  
+ 
     jsr CLRCHN
     lda #1
     jsr CLOSE
-    iny
-    ;skip last slashes
-    ldy CNT
-    :
-        dey
-        cpy #$FF
-        beq @Done
-        lda CMD_BUFFER,y
-        cmp #'/'
-        
-        beq :-
-    @Done:
+
+ ;     lda #COLON
+  ;    jsr CHROUT
+  ;  PrintUntilZero CUR_PATH_REV
+  ;    lda #COLON
+  ;    jsr CHROUT
     
-    jsr SetRambank63
+
+    cpy #1  ;length 1; do nothing
+    beq @FillAndReturn
+    ;reverse order
     
+    dey ;set pointer on last char
+    sty TMP ;store pointer of y
     ldx #0
-    lda #'/'
-    sta CUR_PATH,x
-    inx
-    
-    sty TMP ;Y to read to
-    NextYZZ:
-       cpy #$FF
-       beq CopyDone
-      
-       lda CMD_BUFFER,y
-       cmp #'/'
-       beq StoreUntilLastY
-       dey
-       jmp NextYZZ
-    
-    StoreUntilLastY:
-
-
-        inc TMP
-        phy
-            iny
-            :
-                lda CMD_BUFFER,y
-                sta CUR_PATH,x
-                inx
-                iny
-                cpy TMP
-                bne :-           
-
-        ply    
-        lda #'/'
-        sta CUR_PATH,x
-        inx
+    @rd:
+        lda CUR_PATH_REV,y
+        
+        cmp #$2f  ;/
+        beq @SlashFound
+        
+        cpy #0
+        beq @Ready
+        
+        
         dey
-        tya
-
-        sty TMP
-    jmp NextYZZ
+    jmp @rd
     
-    CopyDone:
+    @SlashFound:
 
-        lda #$0
-        sta CUR_PATH,X
 
-    jsr RestoreRambank
+        sty TMP2    ;save y to restore later
+        @InnerRead:
+            cpy TMP
+            beq @ContinueRead
+            
+            lda CUR_PATH_REV,y
+            sta CUR_PATH,x
+            inx
+            iny
+        jmp @InnerRead
+        
+    jmp @rd
+    
+    @ContinueRead:
+        ldy TMP2    ;restore Y
+        cpy #0
+        beq @Ready
+        sty TMP ;set pointer op /
+        dey
+    jmp @rd
+    @Ready:
+    
+ rts   
+ @FillAndReturn:    
+    lda #$2F
+    sta CUR_PATH
+    lda #0
+    sta CUR_PATH+1
+    
+    
 rts
 
-;Check if selected file is launchable
+
+
+
+
+
+
 IsLaunchable:
-    lda #1 
-    ldx DEVICE_CURRENT ;#8  
-    ldy #2  
+    lda #1   ; Logical Number = 1
+    ldx DEVICE_CURRENT ;#8   ; Device = "SD card" (emulation host FS)
+    ldy #2   ; skip 2 bytes
     jsr SETLFS
-    
     ;get length
     ldy #0
     @nxt:
@@ -6578,7 +7210,7 @@ IsLaunchable:
     cmp #$01    
     bne @Ready
     
-    ;next char should be $08
+    ;next char should be $01
     jsr CHRIN
     cmp #$08    
     bne @Ready
@@ -6593,42 +7225,96 @@ IsLaunchable:
     
 rts
 
-;Copy startdir to and of rambank 0
-StoreStartDirForLauncher:
-    lda $00
-    pha
-        ;$BF00
-        ldx #0
-        :
-            phx
-                lda #63
-                sta $00
-            plx 
-            lda CUR_PATH,x
-            phx
-                pha
-                    lda #0
-                    sta $00
-                pla
-            plx
-            sta $BF00,x
-            
-            inx
+;Addresses	Description
+;$00000-$12BFF	320x240@256c Bitmap
+;$12C00-$12FFF	unused (1024 bytes)
+;$13000-$1AFFF	Sprite Image Data (up to $1000 per sprite at 64x64 8-bit)
+;;$1B000-$1EBFF	Text Mode
+;$1EC00-$1EFFF	unused (1024 bytes)
+;$1F000-$1F7FF	Charset
+;***$1F800-$1F9BF	unused (448 bytes)
+;$1F9C0-$1F9FF	VERA PSG Registers (16 x 4 bytes)
+;$1FA00-$1FBFF	VERA Color Palette (256 x 2 bytes)
+;$1FC00-$1FFFF	VERA Sprite Attributes (128 x 8 bytes)
+
+StoreStartDirInVRAM:
+    sec
+    jsr PLOT
+    phy
+    phx
+        lda #$00
+        STA $9F20   ;ADDRES_L
+        lda #$F8
+        STA $9F21   ;M
+        lda #$11
+        STA $9F22   ;
+        
+        ldy #0
+        @nxt:
+            lda CUR_PATH,y
             cmp #0
-            bne :-
-
-
-    pla
-    sta $00
-    
-
-
+            beq @Ready
+            sta $9F23
+            iny
+        jmp @nxt
+        @Ready:
+       
+       jmp NoFileName
+        ;include /fm.prg
+        lda #$2F
+        sta $9F23
+        lda #$46
+        sta $9F23
+        lda #$4d
+        sta $9F23
+        lda #$2e
+        sta $9F23
+        lda #$50
+        sta $9F23
+        lda #$52
+        sta $9F23
+        lda #$47
+        sta $9F23
+        NoFileName:
+       
+        lda #0
+        sta $9F23
+    plx
+    ply
+    clc
+    jsr PLOT        
 rts
 
+LoadStartDirFromVRAM:
+    sec
+    jsr PLOT
+    phy
+    phx
+        lda #$00
+        STA $9F20   ;ADDRES_L
+        lda #$F8
+        STA $9F21   ;M
+        lda #$11
+        STA $9F22   ;
+        
+        ldy #0
+        @nxt:
+            lda $9F23
+            cmp #0
+            beq @Ready
+            sta CMD_BUFFER,y
+            iny
+        jmp @nxt
+    @Ready:
+    lda #0
+    sta CMD_BUFFER,y
+    plx
+    ply
+    clc
+    jsr PLOT
+rts
 
-;Copy the launcher to  end of basic memory for RAM-version
 CopyLaunchToMem:
-.ifdef uselauncher
 ;$21: r0 = r0L = $02, r0H = $03, r1 = r1L = $04 etc.
     ;set source
     lda #<launch_prg
@@ -6636,10 +7322,10 @@ CopyLaunchToMem:
     lda #>launch_prg
     sta $03     ;r0High
 
-    ;set destionation $8000 ;$9717
-    lda #$17
+    ;set destionation $8000
+    lda #$00
     sta $04     ;r1Low
-    lda #$97
+    lda #$80
     sta $05     ;r1High
     
     ;calculate and set length
@@ -6651,26 +7337,13 @@ CopyLaunchToMem:
 	lda #>launch_prg_end    ;num1hi			; do the same for the MSBs, with carry
 	sbc #>launch_prg			; set according to the previous result
 	sta $07
-    jsr memory_copy   ;memcopy kernal function
-.endif
+    jsr $FEE7   ;memcopy kernal function
+   
 
 rts
 
-jsrfar: .include "jsrfar.inc"
-
-    .include "functions.s"
-    .include "functions_shared.s"
-    .include "jsrfar_kernal.s"
-    .include "debug.s"
-  
-;RAM-version
+ .include "functions.s"
+ 
 launch_prg:
-    .ifdef uselauncher
-        .incbin "bin/launch.prg",$01 ;skip first byte
-    .endif
+   .incbin "launch.prg",$01 ;skip first byte
 launch_prg_end:
-
-;ROM-version
-.ifndef uselauncher
-    .include "launcher.s"
-.endif

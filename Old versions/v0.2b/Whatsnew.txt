@@ -1,0 +1,7 @@
+- F4 edit file
+- Progress bar on copy
+- Warning if file exists on filecopy
+- Bugfix launch and return tokenized basic file from basload
+- Launcher integreated in main program
+- Load and run from other directory then root is now supported
+- Performance improvement on loading file lists

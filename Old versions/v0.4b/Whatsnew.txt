@@ -1,0 +1,23 @@
+- Several bugfixes
+- Performance increase on loading files list
+- Support for screenmodes:
+	80x60 
+	80x30 
+	40x60 
+	40x30 
+	40x15 
+	64x50 
+	64x25 
+- CTRL+PLUS and CTRL+MINUS iterate through supported screenmodes
+- SNES controller support
+- Extended file info to all available information under F2-> fileinfo
+- F3 -> change device/partition (use -sdcard and -hostfsdev at the same time to 
+	allow copying files between hostfs and sd-card)
+- Added user guide
+- Multi partition and device support
+- Load more files-option if there are more then 200 files/dirs
+- File sizes are now shown in kb and mb
+
+
+
+

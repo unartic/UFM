@@ -172,3 +172,9 @@ memory_copy:
     .byt 0
  
 rts
+
+ResetVera:  ;CINT
+     jsr jsrfar
+    .word $FF81
+    .byt 0
+rts

@@ -66,7 +66,9 @@ LaunchMain:
     ;the launcher is called, UFM needs to be loaded
     lda #0 
     sta LAUNCHFILE    
-      
+    
+    jsr ResetVera
+    
     ;Put RUN + [ENTER] on keyboard buffer, to start the loaded basic file
     ;start basic file
     lda #$52
@@ -149,6 +151,8 @@ StartPRG:
         @Ready: 
         jsr DigitToHex
   
+  
+      jsr ResetVera
       ;Store the addres at $02df+1. This is where the jsrfar target address is located in memory
       lda Adder24bitValue
       sta $02df+1
@@ -310,39 +314,13 @@ LoadBasicFileIntoMemory:
     jsr IncBankPointer    ;set pointer on last 00, which now becomes an end of line marker
     jsr IncBankPointer    ;advance pointer to beginning of new line
 
-  skip:
-  
-    ;;;;;;;;;;;;;;;;;;;;
-    ;This seems to be absolete, as all line numbers will be recalculated anyway.Just  need to add 2 bytes probably
-          ;last line is 13 bytes
-          ldy #0
-          @nxt:
-              jsr IncBankPointer
-              iny
-              cpy #12
-              bne @nxt
 
-        
-          ldx ZP_PTR
-          ldy ZP_PTR+1
-
-          ldy #0
-          @nxt2:
-              jsr DecBankPointer
-              iny
-              cpy #12
-              bne @nxt2
-          
-          ;low byte next line
-          txa
-          sta (ZP_PTR)
-          jsr IncBankPointer 
-          tya
-          sta (ZP_PTR)
-          jsr IncBankPointer   
-      ;;;;;;;;;;;;;;;;;;;;;;;
-    
-      
+    ;add two bytes which will later be changed to the correct pointer to address of next line
+    lda #$20
+    sta (ZP_PTR)
+    jsr IncBankPointer     
+    sta (ZP_PTR)
+    jsr IncBankPointer     
       
     ;add line number 63999
     lda #$FF
