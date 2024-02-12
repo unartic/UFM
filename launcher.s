@@ -1,17 +1,5 @@
 
-jmp DoNotExecute
-    ;Tokenized basic snipped: BANK 1,16: SYS $C000
-    SysToRom: .byte $ce,$98,$20,$31,$2c,$31,$36,$3a,$9e,$20,$24,$43,$30,$30,$30,$0 
 
-    DigitToHexValue = $0602 ;byte 5
-
-    CMD = $0400 ;recycle CMD_BUFFER from fm.prg: .res 255 ;command  ;use r0l and r0h, saves 255 bytes
-
-    BasicStart = $0801
-    cnt           = $05ff ;.byte $0
-    FM_DEVICE     = $0600 ;.byte 0
-    FM_PARTITION  = $0601 ;.byte 0
-DoNotExecute:
 
 
 LaunchMain:
@@ -44,6 +32,7 @@ LaunchMain:
     bra @CopyByte
     @CopyDone:
    
+   
 
     iny
     lda LAUNCHFILE+1,y ;Byte after the filename contains the device to switch to
@@ -66,19 +55,15 @@ LaunchMain:
     ;the launcher is called, UFM needs to be loaded
     lda #0 
     sta LAUNCHFILE    
-      
-    ;Put RUN + [ENTER] on keyboard buffer, to start the loaded basic file
-    ;start basic file
-    lda #$52
-    jsr KEY_POKE
-    lda #$55
-    jsr KEY_POKE
-    lda #$4E
-    jsr KEY_POKE
-    lda #$0D
-    jsr KEY_POKE  
+    
+    jsr ResetVera
+    
+    jsr DoBasicRunCommand
 
-rts      
+rts   
+
+
+
       
 
 PRGFile:
@@ -91,20 +76,6 @@ rts
 
 goto_loadfm:  jmp LoadFM
 
-;Load the ML-file into memory
-LoadPRGFileIntoMemory:
-    lda #1  
-    ldx $03fe 
-    ldy #1  
-    jsr SETLFS  
-
-    lda cnt
-    ldx #<CMD
-    ldy #>CMD
-    jsr SETNAM
-    lda #0  ;load, not verify
-    jsr LOAD
-rts
 
 ;Read out SYS address of basic stub, and jsrfar to it
 StartPRG:
@@ -149,6 +120,8 @@ StartPRG:
         @Ready: 
         jsr DigitToHex
   
+  
+      jsr ResetVera
       ;Store the addres at $02df+1. This is where the jsrfar target address is located in memory
       lda Adder24bitValue
       sta $02df+1
@@ -310,39 +283,13 @@ LoadBasicFileIntoMemory:
     jsr IncBankPointer    ;set pointer on last 00, which now becomes an end of line marker
     jsr IncBankPointer    ;advance pointer to beginning of new line
 
-  skip:
-  
-    ;;;;;;;;;;;;;;;;;;;;
-    ;This seems to be absolete, as all line numbers will be recalculated anyway.Just  need to add 2 bytes probably
-          ;last line is 13 bytes
-          ldy #0
-          @nxt:
-              jsr IncBankPointer
-              iny
-              cpy #12
-              bne @nxt
 
-        
-          ldx ZP_PTR
-          ldy ZP_PTR+1
-
-          ldy #0
-          @nxt2:
-              jsr DecBankPointer
-              iny
-              cpy #12
-              bne @nxt2
-          
-          ;low byte next line
-          txa
-          sta (ZP_PTR)
-          jsr IncBankPointer 
-          tya
-          sta (ZP_PTR)
-          jsr IncBankPointer   
-      ;;;;;;;;;;;;;;;;;;;;;;;
-    
-      
+    ;add two bytes which will later be changed to the correct pointer to address of next line
+    lda #$20
+    sta (ZP_PTR)
+    jsr IncBankPointer     
+    sta (ZP_PTR)
+    jsr IncBankPointer     
       
     ;add line number 63999
     lda #$FF
@@ -412,7 +359,13 @@ LoadBasicFileIntoMemory:
     sta (ZP_PTR)
     jsr IncBankPointer 
 
+    ;Set pointer of end of  basic progeam to VARTAB
+    lda ZP_PTR
+    sta $03E1
+    lda ZP_PTR+1
+    sta $03E1+1
 
+  
 
     ;Recalculate next line address pointers
     

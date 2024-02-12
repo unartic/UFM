@@ -1,0 +1,19 @@
+80 -> default
+
+40 cols
+Filename: 12
+Space:     1
+Size:      5? need 6, maybe 6 and filename naar 11
+
+20,22,32
+Filename: 12
++Type (dir or not)
+
+64
+Filename 12
+Space     1
+Size:     8
+Space:    1
+Date:     8  (YYYYMMDD)
+Total 30
+

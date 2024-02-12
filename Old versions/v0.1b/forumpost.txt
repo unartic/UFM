@@ -1,0 +1,61 @@
+Being a developer from de early 90ths qBasic, QuickBasic and PowerBasic where my 'lowlevel' languages. With the x16 I thought it was time to try Assembler. A bit of a struggle at first, but it's comming along quite well.
+
+As probably the most used software for any system is a good file manager, I thought: recreating my favorite one from last century makes sense. So hereby, I present to you the first testable version of Ultimate File Manager for x16, a Norton Commander clone.
+
+Instructions:
+- copy the content of the zip-file to the root (launch won't work otherwise)
+- load fm.prg and run it
+- use TAB to switch between windows, arrows to move the pointer, enter on a directory to CD or on a program to execute
+
+Features:
+- split window browsing through files and directories
+- Basic filemanagement functions: copy, rename, move, delete, create directory
+- For coping the DOS"C:..." command is not used as it is currently unsupported in the emulator. So I made my own.
+- Support for long file names
+- Launch tokenized basic files and assembly files AND return to Ultimate File Manager automaticly when program exited
+
+
+
+Current limitations:
+- Overwriting files is not yet possible
+- Only the first 255 files of a directory are being listed
+- Launch and return to UFM only supported for executables less then +-30kb and/or programs that do not use memory region $8000+
+- Only 80 columns mode is supported
+- Not possible to switch to other partition
+
+Technical details:
+- Developed with Visual Studio Code and ca65 assembler
+- Using rambanks to store the file lists
+- Outputting text directly to vram for fast scrolling/refreshing
+
+
+Todo (in no particular order):
+- Progress bar on file copy
+- typing text searches in files list and moves pointer to correct file
+- Type * to filter
+- Overwrite on filecopy (with warning)
+- optimize launch.prg to become much smaller
+- integrate launch.prg into fm.prg
+- show file size in bytes,kb,mb etc
+- file edit with x16edit
+- file viewer (text and hex)
+- copy directory (including files and subdirectories)
+- delete directory with all files and subdirectories)
+- command shell to execute any DOS-command by typing it
+- sorting files list on size and date
+- SNES controller support
+- support 40 columns
+- size and performance optimization
+- Save last directories, offset and row position on exit, read on load
+- Make UFM work in other directory then root
+
+Test version:
+The current version is still under development. I would like others to test:
+- on real hardware (until now it's only been tested in the emulator R45)
+- launching (complex) tokenized basic files from UFM: if they run correctly and if UFM is opened after basic file is finished
+
+Questions and Thoughts:
+- How many files per directory list should be supported?
+- How to overcome the LOAD"/subdir/ufm.prg" not able to find the starting directory problem
+
+

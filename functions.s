@@ -427,12 +427,6 @@ CHROUT:
 rts
 
 
-;CHROUT without char conversion to handle filenames 1-to-1
-CHROUTbin:
-    jsr jsrfar
-    .word $ffd2
-    .byt 0
-rts
 
 
 
@@ -466,3 +460,4 @@ ConverHexToDigit:
 @done:
 
 rts
+
