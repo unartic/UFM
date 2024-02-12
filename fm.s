@@ -11,6 +11,7 @@
     DIR_RIGHT:          .res 500    
     MSG_MODAL:          .res 255
     
+    
 .segment "RAMBANK62"
     MODAL_SCREEN_BACKUP: .res 2000  ;write to a memorybank, saves a lot of space 
 .segment "GOLDENRAM"
