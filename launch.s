@@ -28,9 +28,9 @@ FileFM: .asciiz "fm.prg"
 Adder24bitValue = $0607 ;: .res 3
 Adder24bitToAdd = $060a ;: .res 2
 
+.include "debug.s"
 .include "launcher.s"   ;shared launcher program between fmrom.prg and launcher.prg
 .include "functions_shared.s"
-.include "debug.s"
 .include "jsrfar_kernal.s"
 jsrfar: .include "jsrfar.inc"
 
@@ -40,3 +40,5 @@ CHROUT:
     .word $ffd2
     .byt 0
 rts
+
+

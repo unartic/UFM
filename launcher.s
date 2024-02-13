@@ -271,10 +271,21 @@ LoadBasicFileIntoMemory:
     jsr CLRCHN
     lda #1
     jsr CLOSE 
-      
+ 
+    ;Next we need to add line 63999 with the return instructions
     
-    ;add last line with SYS command
-    ;Reverse pointer to before the zero bytes which mark the end. Amount of $0 bytes is can vary!
+    
+    ;BASLOAD sometimes closes with 2 $0 bytes, and sometimes with NO zero bytes. In de last case
+    ;there are 2 bytes after the 3 closing bytes. 
+    ;to account or these, first read back until a 0$ bytes is found, then read back until a non-zero byte has been found
+    
+    @prevbyte:    
+      jsr DecBankPointer   
+      lda (ZP_PTR)
+      cmp #0
+      bne @prevbyte     
+    
+    
     @nextzero:    
       jsr DecBankPointer   
       lda (ZP_PTR)
@@ -362,8 +373,10 @@ LoadBasicFileIntoMemory:
     ;Set pointer of end of  basic progeam to VARTAB
     lda ZP_PTR
     sta $03E1
+    jsr print_hex2
     lda ZP_PTR+1
     sta $03E1+1
+    jsr print_hex2
 
   
 
@@ -645,6 +658,29 @@ Multiply:
 rts
 
 
+print_hex2:
+   pha
+      pha	   ; push original A to stack
+         lsr
+         lsr
+         lsr
+         lsr      ; A = A >> 4
+         jsr print_hex_digit2
+      pla      ; pull original A back from stack
+      and #$0F ; A = A & 0b00001111
+      jsr print_hex_digit2
+   pla
+rts
 
-   
-   
+print_hex_digit2:
+   cmp #$0A
+   bpl @letter
+   ora #$30    ; PETSCII numbers: 1=$31, 2=$32, etc.
+   bra @print
+@letter:
+   clc
+   adc #$37		; PETSCII letters: A=$41, B=$42, etc.
+@print:
+   sta DEBUG
+   ;jsr CHROUT
+   rts

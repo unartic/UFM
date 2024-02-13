@@ -1358,16 +1358,19 @@ start:
     ;check screen mode
     sec
     jsr SCREEN_MODE
-    
+    sta TMP
     sty SCREEN_ROWS
     stx SCREEN_COLS
-
 
 
     cpx #39 ;if less then 40 columns, ask to select another screen mode
     bmi Goto_SelectSupportedScreenmode
     
-    jsr ResetVera
+    jsr ResetVera    
+    clc
+    lda TMP
+    jsr SCREEN_MODE
+    
     ;jsr SetCharsetIso
     
     lda $03fe   ;address of current device number
@@ -5712,6 +5715,13 @@ jmp PrintMainScreen2_start
     HelpInfo80: .byte " F2=info F3=part F4=edit F5=copy F6=rename F7=move F8=mkdir F10=quit Del=delete",$0
     
 PrintMainScreen2_start:
+
+    ;check screen mode
+    sec
+    jsr SCREEN_MODE
+    
+    sty SCREEN_ROWS
+    stx SCREEN_COLS
 
     ;set number of lines to 255 to prevent scrolling on writing past the screen
   ;  lda #$FF
