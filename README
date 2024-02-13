@@ -84,7 +84,7 @@ prompted to choose a supported one.
   are displayed.
 
 6. Tips
-- Hit CTRL and + to switch to 80x30 screenmode for better readability
+- Hit CTRL+[+] to switch to 80x30 screenmode for better readability
 - Launch the emulator with: 
       x16emu -hostfsdev 9 -sdcard 2part.img
   and you can hit F3 in UFM to select hostfs on one window and the sd-card on
@@ -98,7 +98,7 @@ prompted to choose a supported one.
 - restore windows to state before launching a program when returning
   from a program
 - Multiselect files/directory's to copy, delete or move
-- Remember user screen mode before launching
+- Remember and retore screen mode when launching file
 
 				
 						
