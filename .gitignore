@@ -1,2 +1,6 @@
 bin/
 map/
+tmp/
+ufm.code-workspace
+.gitignore
+

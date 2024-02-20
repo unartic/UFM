@@ -2425,6 +2425,7 @@ PageDown:
     stx ROW_CURRENT
     
     lda OFFSET_CURRENT
+    clc
     adc ROW_CURRENT
     adc #2
     cmp FILECOUNT_CURRENT
@@ -2480,6 +2481,7 @@ RowDown:
         beq Goto_EndOfScreenlist    ;row>listsize
 
         lda OFFSET_CURRENT
+        clc
         adc ROW_CURRENT
         cmp FILECOUNT_CURRENT
         beq Goto_EndOfScreenlist    
@@ -4315,7 +4317,7 @@ rts
 ;Set rambank pointer to the record of the top most file in the current window
 SetPointerToCurrentOffset:
     lda OFFSET_CURRENT      ;offset
-    ; XXX Are we sure carry is always what we want here?
+    clc
     adc ROW_CURRENT         ;+current row = for pointer
     
     jsr SetRamBank
