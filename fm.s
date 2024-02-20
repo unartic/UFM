@@ -222,11 +222,7 @@
 
 .include "constants.s"
 .include "io.inc"
-
-jsrfar3    = $02c4
-imparm     = $82
-jmpfr      = $02df
-
+.include "banks.inc"
 
 
 ;set golden ram to 0
@@ -4319,6 +4315,7 @@ rts
 ;Set rambank pointer to the record of the top most file in the current window
 SetPointerToCurrentOffset:
     lda OFFSET_CURRENT      ;offset
+    ; XXX Are we sure carry is always what we want here?
     adc ROW_CURRENT         ;+current row = for pointer
     
     jsr SetRamBank
